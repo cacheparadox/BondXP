@@ -64,33 +64,55 @@ function LoginForm() {
 
     setLoading(true);
     try {
-      // Always sign out first so each "Enter" creates a truly fresh anonymous session.
-      // Without this, Supabase reuses the existing session — P2 would get P1's account.
+      // Always sign out first to clear any stale session
       await supabase.auth.signOut();
 
-      // Sign in anonymously — no email needed
-      const { data, error } = await supabase.auth.signInAnonymously();
+      // We use a dummy email and a derived password to allow multi-device username login
+      const cleanUsername = trimmed.toLowerCase();
+      const email = `${cleanUsername}@bondxp.local`;
+      const password = `${cleanUsername}_bondxp_secure_pass`;
 
-      if (error) {
+      // 1. Try signing in
+      let { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      // 2. If user doesn't exist, sign up
+      if (error && (error.message.includes("Invalid login credentials") || error.status === 400)) {
+        const signUpResult = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (signUpResult.error) {
+          toast.error(signUpResult.error.message);
+          setLoading(false);
+          return;
+        }
+
+        data = signUpResult.data;
+      } else if (error) {
         toast.error(error.message);
+        setLoading(false);
         return;
       }
 
       const userId = data.user?.id;
       if (!userId) throw new Error("No user ID returned");
 
-      // Check if this anonymous user already has a profile (shouldn't on fresh login, but just in case)
+      // Check if user already has a profile row in the users table
       const { data: existing } = await (supabase.from("users") as any)
         .select("id, couple_session_id")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (!existing) {
-        // Pre-create the user row with the display_name so pairing page can read it
+        // Pre-create the user row with the display_name (original casing)
         await (supabase.from("users") as any).insert({
           id: userId,
-          display_name: trimmed,
-          role: "task_user", // default; user can change on pairing page
+          display_name: trimmed, // keep original casing
+          role: "task_user", // default
         });
       }
 
