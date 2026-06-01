@@ -5,9 +5,9 @@ import PageHeader from "@/components/layout/PageHeader";
 import StreakFlame from "@/components/animations/StreakFlame";
 import { createClient } from "@/lib/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, Calendar, Gift, Sparkles, MessageCircle, AlertCircle, Plus, Send } from "lucide-react";
+import { Check, X, Calendar, Gift, Sparkles, MessageCircle, AlertCircle, Plus, Send, Clock, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay } from "date-fns";
 
 export default function RewardGiverDashboard() {
   const supabase = createClient();
@@ -22,6 +22,9 @@ export default function RewardGiverDashboard() {
 
   // Redemptions Queue
   const [redemptions, setRedemptions] = useState<any[]>([]);
+
+  // Partner's Completed Tasks Today
+  const [partnerTasks, setPartnerTasks] = useState<any[]>([]);
 
   // Surprise / Bonus states
   const [bonusAmount, setBonusAmount] = useState(5);
@@ -110,6 +113,15 @@ export default function RewardGiverDashboard() {
         .order("redeemed_at", { ascending: true });
 
       setRedemptions(redData || []);
+
+      // 7. Load partner tasks completed today
+      const start = startOfDay(new Date()).toISOString();
+      const end = endOfDay(new Date()).toISOString();
+      const tasksResponse = await fetch(`/api/tasks?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+      const tasksData = await tasksResponse.json();
+      if (tasksData.tasks) {
+        setPartnerTasks(tasksData.tasks);
+      }
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to load partner dashboard");
@@ -427,6 +439,60 @@ export default function RewardGiverDashboard() {
                     <Gift className="w-8 h-8 text-white/20 stroke-[1.5]" />
                     <p className="text-xs font-body leading-relaxed max-w-[200px]">
                       No pending redemptions in the queue. You will be notified when your partner redeems a reward!
+                    </p>
+                  </div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Partner's Completed Tasks Today Card */}
+          <div className="card bg-white/[0.02] border-white/[0.06] p-6 flex-col min-h-[300px]">
+            <h2 className="text-sm font-heading font-bold uppercase tracking-wider text-white/70 mb-4 flex items-center justify-between">
+              <span>Partner's Logged Tasks Today</span>
+              <span className="badge-primary px-2.5 py-0.5 text-[10px]">
+                {partnerTasks.length} Completed
+              </span>
+            </h2>
+
+            <div className="flex-1 relative overflow-y-auto max-h-[350px] pr-1 space-y-3">
+              <AnimatePresence initial={false}>
+                {partnerTasks.length > 0 ? (
+                  partnerTasks.map((task) => (
+                    <motion.div
+                      key={task.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      className="p-3.5 rounded-xl border border-white/[0.04] bg-white/[0.01] hover:bg-white/[0.03] transition-colors flex items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl bg-white/[0.04] p-2 rounded-xl border border-white/[0.06]">
+                          {task.icon || "📝"}
+                        </span>
+                        <div>
+                          <h4 className="font-heading font-semibold text-sm text-white/90">
+                            {task.title}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[10px] text-white/40 mt-1 font-body">
+                            <span className="bg-white/[0.05] px-1.5 py-0.5 rounded text-[8px] uppercase font-bold text-white/60">
+                              {task.category}
+                            </span>
+                            <span>•</span>
+                            <span className="flex items-center gap-0.5">
+                              <Clock className="w-2.5 h-2.5" />
+                              {format(new Date(task.completed_at), "h:mm a")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center h-full min-h-[200px] text-white/40 gap-2">
+                    <CheckCircle className="w-8 h-8 text-white/20 stroke-[1.5]" />
+                    <p className="text-xs font-body leading-relaxed max-w-[200px]">
+                      Your partner hasn't logged any tasks yet today.
                     </p>
                   </div>
                 )}

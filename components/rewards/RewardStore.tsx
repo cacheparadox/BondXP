@@ -15,6 +15,7 @@ export default function RewardStore() {
   const [bank, setBank] = useState<any>(null);
   const [rewards, setRewards] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
+  const [showAffordableOnly, setShowAffordableOnly] = useState(false);
 
   // Cooldown Trackers (stores latest redemptions to calculate remaining cooldowns)
   const [redemptions, setRedemptions] = useState<any[]>([]);
@@ -50,11 +51,12 @@ export default function RewardStore() {
         .single();
       setBank(b);
 
-      // 3. Get all active & visible rewards in this couple session
+      // 3. Get all active & visible redemption rewards in this couple session (excl. streak rewards)
       const { data: rew } = await (supabase
         .from("rewards") as any)
         .select("*")
         .eq("couple_session_id", prof.couple_session_id)
+        .eq("reward_type", "redemption")
         .eq("active", true)
         .eq("hidden", false)
         .order("sort_order", { ascending: true });
@@ -130,8 +132,9 @@ export default function RewardStore() {
   };
 
   const filteredRewards = rewards.filter((r) => {
-    if (activeCategory === "all") return true;
-    return r.category === activeCategory;
+    if (activeCategory !== "all" && r.category !== activeCategory) return false;
+    if (showAffordableOnly && availableBalance < r.cost) return false;
+    return true;
   });
 
   if (loading) {
@@ -174,20 +177,36 @@ export default function RewardStore() {
         </div>
       </div>
 
-      {/* Category Tab List */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-none">
-        {REWARD_CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
-            className={`chip whitespace-nowrap px-4 py-2 border-white/[0.06] text-xs font-bold font-heading ${
-              activeCategory === cat.id ? "chip-active" : ""
-            }`}
-          >
-            <span>{cat.icon}</span>
-            <span>{cat.label}</span>
-          </button>
-        ))}
+      {/* Filters and Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        {/* Category Tab List */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none max-w-full sm:max-w-[75%]">
+          {REWARD_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`chip whitespace-nowrap px-4 py-2 border-white/[0.06] text-xs font-bold font-heading ${
+                activeCategory === cat.id ? "chip-active" : ""
+              }`}
+            >
+              <span>{cat.icon}</span>
+              <span>{cat.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Affordable filter button */}
+        <button
+          onClick={() => setShowAffordableOnly(!showAffordableOnly)}
+          className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-heading font-bold transition-all cursor-pointer ${
+            showAffordableOnly
+              ? "bg-primary/10 border-primary text-primary shadow-glow-primary-sm"
+              : "bg-white/[0.02] border-white/[0.08] text-white/60 hover:text-white"
+          }`}
+        >
+          <Trophy className="w-3.5 h-3.5" />
+          <span>Affordable Only</span>
+        </button>
       </div>
 
       {/* Reward Grid */}

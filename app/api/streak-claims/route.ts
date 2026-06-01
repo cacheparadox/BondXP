@@ -83,8 +83,29 @@ export async function GET(request: Request) {
       });
     }
 
-    // User is eligible! Find all milestones at or below their streak level
-    const availableMilestones = STREAK_MILESTONES.filter((m) => m.days <= currentStreak);
+    // User is eligible! Find all milestones at or below their streak level from database
+    const { data: dbStreakRewards } = await (supabase
+      .from("rewards") as any)
+      .select("*")
+      .eq("couple_session_id", profile.couple_session_id)
+      .eq("reward_type", "streak")
+      .eq("active", true);
+
+    let availableMilestones = [];
+    if (dbStreakRewards && dbStreakRewards.length > 0) {
+      availableMilestones = dbStreakRewards
+        .map((r: any) => ({
+          days: r.cost, // Use cost as the milestone day
+          title: r.title,
+          icon: r.icon || "🎁",
+          description: r.description || "",
+        }))
+        .filter((m: any) => m.days <= currentStreak)
+        .sort((a: any, b: any) => a.days - b.days);
+    } else {
+      // Fallback to default presets
+      availableMilestones = STREAK_MILESTONES.filter((m) => m.days <= currentStreak);
+    }
 
     return NextResponse.json({
       eligible: true,
@@ -151,8 +172,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Cannot claim a Day ${milestoneDays} reward with a streak of only ${currentStreak} days.` }, { status: 400 });
     }
 
-    // Find milestone details
-    const milestone = STREAK_MILESTONES.find((m) => m.days === milestoneDays);
+    // Find milestone details from database
+    let milestone = null;
+    const { data: dbStreakRewards } = await (supabase
+      .from("rewards") as any)
+      .select("*")
+      .eq("couple_session_id", profile.couple_session_id)
+      .eq("reward_type", "streak")
+      .eq("active", true);
+
+    if (dbStreakRewards && dbStreakRewards.length > 0) {
+      const dbMilestone = dbStreakRewards.find((r: any) => r.cost === milestoneDays);
+      if (dbMilestone) {
+        milestone = {
+          days: dbMilestone.cost,
+          title: dbMilestone.title,
+          icon: dbMilestone.icon || "🎁",
+          description: dbMilestone.description || "",
+        };
+      }
+    }
+
+    if (!milestone) {
+      // Fallback to default presets
+      milestone = STREAK_MILESTONES.find((m) => m.days === milestoneDays);
+    }
+
     if (!milestone) {
       return NextResponse.json({ error: "Invalid milestone level" }, { status: 400 });
     }
