@@ -77,28 +77,106 @@ export default function NotesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File, maxWidth: number = 1200, maxHeight: number = 1200, quality: number = 0.75): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                resolve(file);
+                return;
+              }
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            "image/jpeg",
+            quality
+          );
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Limit to 5MB
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image file size must be less than 5MB");
-      return;
-    }
-
-    // Must be image
     if (!file.type.startsWith("image/")) {
       toast.error("Selected file must be an image");
       return;
     }
 
-    setSelectedFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    const toastId = toast.loading("Compressing image...");
+    try {
+      const compressed = await compressImage(file);
+      setSelectedFile(compressed);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+        toast.dismiss(toastId);
+        
+        const savedPercent = Math.max(0, Math.round(((file.size - compressed.size) / file.size) * 100));
+        if (savedPercent > 10) {
+          toast.success(`Image compressed! (Saved ${savedPercent}% size) 📸`);
+        } else {
+          toast.success("Image optimized! 📸");
+        }
+      };
+      reader.readAsDataURL(compressed);
+    } catch (err) {
+      console.error(err);
+      toast.dismiss(toastId);
+      
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image is too large (max 5MB without compression)");
+        return;
+      }
+      
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleRemoveImage = () => {

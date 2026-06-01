@@ -131,6 +131,8 @@ export default function RewardStore() {
     }
   };
 
+  const availableBalance = bank?.available_tasks || 0;
+
   const filteredRewards = rewards.filter((r) => {
     if (activeCategory !== "all" && r.category !== activeCategory) return false;
     if (showAffordableOnly && availableBalance < r.cost) return false;
@@ -146,8 +148,6 @@ export default function RewardStore() {
       </div>
     );
   }
-
-  const availableBalance = bank?.available_tasks || 0;
 
   return (
     <div className="min-h-screen pb-24 md:pb-6 p-4 max-w-4xl w-full mx-auto">
