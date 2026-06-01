@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Calendar, Gift, Sparkles, MessageCircle, AlertCircle, Plus, Send, Clock, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfDay, endOfDay } from "date-fns";
+import { sendNtfyToUser } from "@/lib/ntfy";
 
 export default function RewardGiverDashboard() {
   const supabase = createClient();
@@ -30,6 +31,11 @@ export default function RewardGiverDashboard() {
   const [bonusAmount, setBonusAmount] = useState(5);
   const [bonusReason, setBonusReason] = useState("");
   const [bonusLoading, setBonusLoading] = useState(false);
+
+  // Adjust partner stats states
+  const [newStreak, setNewStreak] = useState(0);
+  const [newTasks, setNewTasks] = useState(0);
+  const [updatingStats, setUpdatingStats] = useState(false);
 
   const localDateStr = format(new Date(), "yyyy-MM-dd");
 
@@ -83,7 +89,10 @@ export default function RewardGiverDashboard() {
         .eq("user_id", part.id)
         .single();
       setPartnerStreak(str);
-
+      if (str) {
+        setNewStreak(str.current_streak);
+      }
+      
       // 5. Load partner bank
       const { data: b } = await (supabase
         .from("task_bank") as any)
@@ -91,6 +100,9 @@ export default function RewardGiverDashboard() {
         .eq("user_id", part.id)
         .single();
       setPartnerBank(b);
+      if (b) {
+        setNewTasks(b.available_tasks);
+      }
 
       // 6. Load pending redemptions (including reward title details)
       const { data: redData } = await (supabase
@@ -205,6 +217,15 @@ export default function RewardGiverDashboard() {
         body: `Your partner granted you +${bonusAmount} bonus tasks! Reason: ${bonusReason || "No reason given."}`,
       });
 
+      // Dispatch NTFY Alert
+      await sendNtfyToUser(
+        supabase,
+        partner.id,
+        "Bonus XP Received! 🎁",
+        `Your partner granted you +${bonusAmount} bonus tasks! Reason: ${bonusReason || "No reason given."}`,
+        "gift"
+      );
+
       toast.success(`Sent +${bonusAmount} tasks to ${partner.display_name}!`);
       setBonusReason("");
       loadData();
@@ -213,6 +234,62 @@ export default function RewardGiverDashboard() {
       console.error(err);
     } finally {
       setBonusLoading(false);
+    }
+  };
+
+  const handleUpdateStats = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!partner) return;
+
+    setUpdatingStats(true);
+    try {
+      // 1. Update streak
+      const { error: streakError } = await (supabase
+        .from("streaks") as any)
+        .update({
+          current_streak: newStreak,
+          longest_streak: Math.max(partnerStreak?.longest_streak || 0, newStreak),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", partner.id);
+
+      if (streakError) throw streakError;
+
+      // 2. Update task bank
+      const spent = partnerBank?.spent_tasks || 0;
+      const { error: bankError } = await (supabase
+        .from("task_bank") as any)
+        .update({
+          lifetime_tasks: newTasks + spent,
+        })
+        .eq("user_id", partner.id);
+
+      if (bankError) throw bankError;
+
+      // 3. Send notification to partner
+      await (supabase.from("notifications") as any).insert({
+        user_id: partner.id,
+        type: "stats_adjusted",
+        title: "Stats Adjusted by Partner! ⚙️",
+        body: `Your stats were updated: Streak = ${newStreak} days, Tasks = ${newTasks}.`,
+      });
+
+      // Dispatch NTFY Alert
+      await sendNtfyToUser(
+        supabase,
+        partner.id,
+        "Stats Adjusted! ⚙️",
+        `Your stats were updated by your partner: Streak = ${newStreak} days, Available Tasks = ${newTasks}.`,
+        "gear"
+      );
+
+      toast.success("Partner stats updated successfully!");
+      loadData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update stats");
+      console.error(err);
+    } finally {
+      setUpdatingStats(false);
     }
   };
 
@@ -302,21 +379,32 @@ export default function RewardGiverDashboard() {
                 <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
                   Amount
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[2, 5, 10].map((amt) => (
-                    <button
-                      key={amt}
-                      type="button"
-                      onClick={() => setBonusAmount(amt)}
-                      className={`py-1.5 rounded-lg border text-xs font-bold font-heading transition-all ${
-                        bonusAmount === amt
-                          ? "bg-primary/10 border-primary text-primary"
-                          : "bg-white/[0.02] border-white/[0.08] text-white/60"
-                      }`}
-                    >
-                      +{amt} Tasks
-                    </button>
-                  ))}
+                <div className="flex gap-2">
+                  <div className="flex-1 grid grid-cols-3 gap-2">
+                    {[2, 5, 10].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() => setBonusAmount(amt)}
+                        className={`py-1.5 rounded-lg border text-[10px] font-bold font-heading transition-all ${
+                          bonusAmount === amt
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "bg-white/[0.02] border-white/[0.08] text-white/60"
+                        }`}
+                      >
+                        +{amt} Tasks
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={bonusAmount}
+                    onChange={(e) => setBonusAmount(Math.max(1, Number(e.target.value)))}
+                    className="input w-24 text-center text-xs font-heading font-bold"
+                    title="Or enter custom amount"
+                  />
                 </div>
               </div>
 
@@ -344,6 +432,53 @@ export default function RewardGiverDashboard() {
               >
                 <Send className="w-3.5 h-3.5" />
                 {bonusLoading ? "Granting..." : `Grant Bonus`}
+              </button>
+            </form>
+          </div>
+
+          {/* Adjust Partner Stats Card */}
+          <div className="card bg-white/[0.02] border-white/[0.06] p-6">
+            <h2 className="text-sm font-heading font-bold uppercase tracking-wider text-white/70 mb-4 flex items-center gap-1.5">
+              <Plus className="w-4 h-4 text-primary rotate-45" />
+              Adjust Partner Stats
+            </h2>
+            
+            <form onSubmit={handleUpdateStats} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
+                    Active Streak (Days)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newStreak}
+                    onChange={(e) => setNewStreak(Math.max(0, Number(e.target.value)))}
+                    className="input text-center text-xs font-heading font-bold"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
+                    Available Tasks
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newTasks}
+                    onChange={(e) => setNewTasks(Math.max(0, Number(e.target.value)))}
+                    className="input text-center text-xs font-heading font-bold"
+                  />
+                </div>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={updatingStats}
+                className="w-full btn-primary py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Check className="w-3.5 h-3.5" />
+                {updatingStats ? "Saving..." : "Save Stat Adjustments"}
               </button>
             </form>
           </div>

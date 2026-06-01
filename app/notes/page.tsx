@@ -239,6 +239,21 @@ export default function NotesPage() {
 
       if (insertError) throw insertError;
 
+      // Send NTFY push alert if partner has a topic configured
+      if (partner && partner.ntfy_topic) {
+        const topic = partner.ntfy_topic.trim();
+        if (topic) {
+          fetch(`https://ntfy.sh/${topic}`, {
+            method: "POST",
+            headers: {
+              "Title": "New Memory! 💖",
+              "Tags": "heart,love_letter",
+            },
+            body: "You got a new note in your Cute Corner!",
+          }).catch((err) => console.error("Failed to send client-side NTFY note alert:", err));
+        }
+      }
+
       // 3. Clear form state & reload
       setContent("");
       setSelectedFile(null);

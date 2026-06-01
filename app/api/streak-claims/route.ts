@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { STREAK_MILESTONES } from "@/types/supabase";
+import { sendNtfyToPartner } from "@/lib/ntfy";
 
 /**
  * GET /api/streak-claims
@@ -253,6 +254,15 @@ export async function POST(request: Request) {
         title: "Partner Claimed Streak Reward! 🎁",
         body: `Your partner hit a ${currentStreak}-day streak and claimed: ${milestone.icon} ${milestone.title} (Day ${milestoneDays} milestone). Surprise them soon!`,
       });
+
+      // Send NTFY alert to partner
+      await sendNtfyToPartner(
+        supabase,
+        user.id,
+        "Streak Reward Claimed! 🌟",
+        `${profile.display_name} hit a ${currentStreak}-day streak and claimed: ${milestone.icon} ${milestone.title} (Day ${milestoneDays} milestone).`,
+        "tada,fire"
+      );
     }
 
     return NextResponse.json({ success: true, claim });

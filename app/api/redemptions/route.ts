@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { deductFromTaskBank } from "@/lib/reward-engine/task-bank";
 import { differenceInHours } from "date-fns";
+import { sendNtfyToPartner } from "@/lib/ntfy";
 
 /**
  * POST /api/redemptions
@@ -129,6 +130,15 @@ export async function POST(request: Request) {
         title: "New Wish Request! ✨",
         body: `Your partner wants to redeem: ${reward.icon || "🎁"} ${reward.title}. Review it on your dashboard.`,
       });
+
+      // Send NTFY alert to partner
+      await sendNtfyToPartner(
+        supabase,
+        user.id,
+        "New Wish Request! 💖",
+        `${profile.display_name} wants to redeem: ${reward.icon || "🎁"} ${reward.title} (Cost: ${reward.cost} XP)`,
+        "gift,love_letter"
+      );
     }
 
     return NextResponse.json({ success: true, redemption });

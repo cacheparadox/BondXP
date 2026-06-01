@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logTaskAndCheckStreak } from "@/lib/streak-engine";
+import { sendNtfyToPartner } from "@/lib/ntfy";
 
 /**
  * GET /api/tasks
@@ -119,6 +120,15 @@ export async function POST(request: Request) {
     // 2. Process streak validation & task bank logic
     const streakResult = await logTaskAndCheckStreak(supabase, user.id, localDate, taskValue);
 
+    // Send NTFY Alert to partner
+    await sendNtfyToPartner(
+      supabase,
+      user.id,
+      "Task Completed! ✅",
+      `${profile.display_name} completed: "${title.trim()}" (${taskValue} standard task XP)`,
+      "ballot_box_with_check,sparkles"
+    );
+
     // 3. Create milestone notifications if unlocked
     if (streakResult.milestoneUnlocked) {
       await (supabase.from("notifications") as any).insert({
@@ -143,6 +153,15 @@ export async function POST(request: Request) {
           title: "Partner Milestone! 🌟",
           body: `Your partner unlocked the Day ${streakResult.milestoneUnlocked.days} milestone! They can now claim: ${streakResult.milestoneUnlocked.title}.`,
         });
+
+        // Send NTFY alert to partner for milestone unlock
+        await sendNtfyToPartner(
+          supabase,
+          user.id,
+          "Milestone Unlocked! 🎁",
+          `${profile.display_name} unlocked the Day ${streakResult.milestoneUnlocked.days} milestone: "${streakResult.milestoneUnlocked.title}"!`,
+          "tada,fire"
+        );
       }
     }
 
