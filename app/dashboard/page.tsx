@@ -1,44 +1,71 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import AppShell from "@/components/layout/AppShell";
-import PageHeader from "@/components/layout/PageHeader";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import TaskUserDashboard from "@/components/dashboard/TaskUserDashboard";
+import RewardGiverDashboard from "@/components/dashboard/RewardGiverDashboard";
+import { Heart } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const supabase = createClient();
-  const [profile, setProfile] = useState<any>(null);
+  
+  const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<"task_user" | "reward_giver" | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        setProfile(data);
+      if (!user) {
+        router.push("/login");
+        return;
       }
+
+      // Query profile
+      const { data: profile, error } = await (supabase
+        .from("users") as any)
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !profile) {
+        // Not paired or no profile -> send to pairing
+        router.push("/pairing");
+        return;
+      }
+
+      setRole(profile.role);
+      setLoading(false);
     }
     loadProfile();
-  }, [supabase]);
+  }, [router, supabase]);
 
-  return (
-    <AppShell>
-      <PageHeader
-        displayName={profile?.display_name || "Sweetheart"}
-        role={profile?.role || "task_user"}
-        currentStreak={0}
-      />
-      <div className="page-content flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div className="card max-w-sm w-full p-8 border border-white/[0.08] bg-white/[0.02]">
-          <h2 className="text-lg font-heading font-bold text-white mb-2">Welcome to BondXP</h2>
-          <p className="text-xs font-body text-white/50 leading-relaxed">
-            Your profile is successfully paired! In Phase 2, we will enable daily task logging, streak tracking, and XP gains.
-          </p>
-        </div>
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-dark text-white">
+        <motion.div
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="relative flex items-center justify-center"
+        >
+          <Heart className="w-12 h-12 text-primary fill-primary" />
+        </motion.div>
+        <p className="mt-4 text-xs font-heading font-semibold text-white/50 uppercase tracking-widest animate-pulse">
+          Resolving Space...
+        </p>
       </div>
-    </AppShell>
-  );
+    );
+  }
+
+  if (role === "task_user") {
+    return <TaskUserDashboard />;
+  }
+
+  if (role === "reward_giver") {
+    return <RewardGiverDashboard />;
+  }
+
+  return null;
 }

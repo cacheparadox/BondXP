@@ -36,8 +36,8 @@ export default function PairingPage() {
       setUser(user);
 
       // Check if user already has a profile
-      const { data: profileData } = await supabase
-        .from("users")
+      const { data: profileData } = await (supabase
+        .from("users") as any)
         .select("*")
         .eq("id", user.id)
         .single();
@@ -89,6 +89,35 @@ export default function PairingPage() {
         });
 
       if (userError) throw userError;
+
+      // 3. Clone template rewards for this session
+      const { data: templates } = await (supabase
+        .from("rewards") as any)
+        .select("*")
+        .is("couple_session_id", null);
+
+      if (templates && templates.length > 0) {
+        const clonedTemplates = templates.map((r: any) => ({
+          couple_session_id: sessionData.id,
+          title: r.title,
+          description: r.description,
+          category: r.category,
+          cost: r.cost,
+          reward_type: r.reward_type,
+          icon: r.icon,
+          cooldown_hours: r.cooldown_hours,
+          hidden: r.hidden,
+          active: r.active,
+          sort_order: r.sort_order,
+          created_by: user.id,
+        }));
+
+        const { error: cloneError } = await (supabase
+          .from("rewards") as any)
+          .insert(clonedTemplates);
+
+        if (cloneError) console.error("Template cloning failed:", cloneError);
+      }
 
       setCreatedCode(sessionData.invite_code);
       setStep("create_display");
