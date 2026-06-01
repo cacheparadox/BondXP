@@ -276,16 +276,13 @@ CREATE POLICY "streak_claims_couple_select" ON streak_reward_claims
     )
   );
 
--- Task bank: couple can view, own can update
-CREATE POLICY "task_bank_couple" ON task_bank
-  FOR SELECT USING (
+-- Task bank: couple members can read and update
+CREATE POLICY "task_bank_couple_all" ON task_bank
+  FOR ALL USING (
     user_id IN (
       SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );
-
-CREATE POLICY "task_bank_own" ON task_bank
-  FOR ALL USING (auth.uid() = user_id);
 
 -- Rewards: couple sees all active (hidden rewards only visible to reward_giver)
 CREATE POLICY "rewards_couple" ON rewards
