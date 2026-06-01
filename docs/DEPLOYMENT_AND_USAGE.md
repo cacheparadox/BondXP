@@ -101,15 +101,15 @@ Ensure you've run the SQL scripts in your Supabase SQL editor:
 3. Import your `BondXP` repository from GitHub.
 4. Expand **Environment Variables** and copy the values from your local `.env.local` file:
 
-| Vercel Key | Value / Source | Description |
+| Vercel Key | Exact Source Location | Description / Format |
 | :--- | :--- | :--- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://hoqarmpzwdpldqxhidbd.supabase.co` | Supabase API endpoint URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | *Your Anon Key* | Public anon token for client |
-| `SUPABASE_SERVICE_ROLE_KEY` | *Your Service Role Key* | Secret service token (keep safe) |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `BFrysT7O6SQ98T3...` | Generated PWA push public key |
-| `VAPID_PRIVATE_KEY` | `APQsVc7dghaG89qR...` | Generated PWA push private key |
-| `VAPID_EMAIL` | `mailto:your-email@domain.com` | Email used for push alerts |
-| `NEXT_PUBLIC_APP_URL` | `https://your-app-name.vercel.app` | Your Vercel production deployment URL |
+| `NEXT_PUBLIC_SUPABASE_URL` | **Supabase Dashboard** -> **Project Settings** -> **API** -> **Project URL** | The URL of your Supabase project (already in your local `.env.local` line 1). |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Supabase Dashboard** -> **Project Settings** -> **API** -> **Project API Keys** (`anon public`) | The public key for client access (already in your local `.env.local` line 2). |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Supabase Dashboard** -> **Project Settings** -> **API** -> **Project API Keys** (`service_role secret`) | Secret administrative bypass key. |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | **Your local `.env.local` file** (Line 6) | Public VAPID key we generated for PWA push messaging. |
+| `VAPID_PRIVATE_KEY` | **Your local `.env.local` file** (Line 7) | Secret VAPID key we generated for PWA push messaging. |
+| `VAPID_EMAIL` | **Your custom value** | Formatted as `mailto:your-email@domain.com` (tells push servers who sent it). |
+| `NEXT_PUBLIC_APP_URL` | **Vercel Deployment Dashboard** | The final live URL of your deployed Vercel app (e.g., `https://bondxp.vercel.app`). |
 
 5. Click **Deploy**. Vercel will build the Next.js app and take it live!
 
