@@ -161,12 +161,11 @@ Change the body to:
   <div class="wrapper">
     <div class="container">
       <div class="heart">💖</div>
-      <h1>Confirm Your Space</h1>
-      <p>Your private, relationship-powered productivity reward space is ready. Click below to verify your email and enter the space.</p>
-      <a href="{{ .ConfirmationURL }}" class="btn">Enter BondXP</a>
+      <h1>Welcome to BondXP</h1>
+      <p>Your private, relationship-powered productivity reward space is ready. Open the button to access your app.</p>
+      <a href="{{ .ConfirmationURL }}" class="btn">Enter Space</a>
       <div class="footer">
-        You are receiving this email to join your partner on BondXP.<br>
-        If you didn't request this, you can safely ignore this email.
+        Sent for BondXP.
       </div>
     </div>
   </div>
@@ -197,11 +196,10 @@ Change the body to:
     <div class="container">
       <div class="spark">✨</div>
       <h1>Log In to BondXP</h1>
-      <p>Tap the button below to log back into your private space instantly.</p>
+      <p>Open the button to join your partner in the app.</p>
       <a href="{{ .ConfirmationURL }}" class="btn">Log In</a>
       <div class="footer">
-        Requested for your account.<br>
-        If you didn't request this, you can safely ignore this email.
+        Sent for BondXP.
       </div>
     </div>
   </div>
