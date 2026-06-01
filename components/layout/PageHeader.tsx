@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Flame, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Flame, Clock, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { getNextStreakMilestone } from "@/types/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 interface PageHeaderProps {
   displayName?: string;
@@ -16,7 +18,14 @@ export default function PageHeader({
   role = "task_user",
   currentStreak = 0,
 }: PageHeaderProps) {
+  const router = useRouter();
+  const supabase = createClient();
   const [timeLeft, setTimeLeft] = useState("");
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   // Countdown timer to local midnight
   useEffect(() => {
@@ -97,6 +106,18 @@ export default function PageHeader({
             </span>
           </div>
         </div>
+
+        {/* Logout */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleLogout}
+          title="Switch user / Logout"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-white/40 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-all duration-200 cursor-pointer"
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="text-[10px] font-heading font-bold uppercase tracking-wider hidden sm:block">Logout</span>
+        </motion.button>
       </div>
     </header>
   );

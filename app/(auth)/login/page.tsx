@@ -64,6 +64,10 @@ function LoginForm() {
 
     setLoading(true);
     try {
+      // Always sign out first so each "Enter" creates a truly fresh anonymous session.
+      // Without this, Supabase reuses the existing session — P2 would get P1's account.
+      await supabase.auth.signOut();
+
       // Sign in anonymously — no email needed
       const { data, error } = await supabase.auth.signInAnonymously();
 
