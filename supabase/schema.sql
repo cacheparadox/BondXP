@@ -336,9 +336,9 @@ CREATE POLICY "analytics_own" ON analytics
 CREATE POLICY "push_subs_own" ON push_subscriptions
   FOR ALL USING (auth.uid() = user_id);
 
--- Couple sessions: members can view their own
-CREATE POLICY "couple_sessions_member" ON couple_sessions
-  FOR SELECT USING (id = get_my_couple_session_id());
+-- Couple sessions: any authenticated user can read (needed for invite code lookup + INSERT RETURNING)
+CREATE POLICY "couple_sessions_select" ON couple_sessions
+  FOR SELECT USING (auth.uid() IS NOT NULL);
 
 CREATE POLICY "couple_sessions_insert" ON couple_sessions
   FOR INSERT WITH CHECK (true);
