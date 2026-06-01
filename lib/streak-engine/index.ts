@@ -41,15 +41,18 @@ export async function logTaskAndCheckStreak(
   const qualifiesNow = completedToday >= 10 && !qualifiedToday;
   const isQualified = completedToday >= 10;
 
-  // Upsert progress
+  // Upsert progress with onConflict target
   const { error: upsertError } = await (supabase
     .from("daily_progress") as any)
-    .upsert({
-      user_id: userId,
-      date: localDateStr,
-      tasks_completed: completedToday,
-      streak_qualified: isQualified,
-    });
+    .upsert(
+      {
+        user_id: userId,
+        date: localDateStr,
+        tasks_completed: completedToday,
+        streak_qualified: isQualified,
+      },
+      { onConflict: "user_id,date" }
+    );
 
   if (upsertError) throw upsertError;
 
@@ -107,16 +110,19 @@ export async function logTaskAndCheckStreak(
     currentStreak = newStreak;
     const longest = Math.max(streakRecord?.longest_streak || 0, newStreak);
 
-    // Save streak update
+    // Save streak update with onConflict target
     const { error: streakUpdateError } = await (supabase
       .from("streaks") as any)
-      .upsert({
-        user_id: userId,
-        current_streak: newStreak,
-        longest_streak: longest,
-        last_completion_date: localDateStr,
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          user_id: userId,
+          current_streak: newStreak,
+          longest_streak: longest,
+          last_completion_date: localDateStr,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
 
     if (streakUpdateError) throw streakUpdateError;
 
