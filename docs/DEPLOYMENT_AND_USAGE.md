@@ -223,3 +223,10 @@ Setting up a **free Resend account** takes 2 minutes, provides **3,000 free emai
 
 Now you will bypass the 2 emails/hour rate limit completely and be able to sign up and log in as much as you need!
 
+> [!NOTE]
+> **Where do templates get managed?**
+> You **do not** upload or manage templates on Resend. Supabase still compiles and manages your custom templates under **Authentication** -> **Email Templates** on the Supabase dashboard. When a login or signup is triggered, Supabase compiles the HTML (replacing `{{ .ConfirmationURL }}`) and securely relays the email to Resend's SMTP server to send it out.
+> 
+> *Bonus: Since you are using custom SMTP, the default mailer's strict anti-phishing keyword filters are bypassed. If you want, you can now customize the wording or styles even further without getting blocked!*
+
+
