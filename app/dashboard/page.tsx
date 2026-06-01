@@ -8,6 +8,8 @@ import RewardGiverDashboard from "@/components/dashboard/RewardGiverDashboard";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 
+import AppShell from "@/components/layout/AppShell";
+
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -59,13 +61,9 @@ export default function DashboardPage() {
     );
   }
 
-  if (role === "task_user") {
-    return <TaskUserDashboard />;
-  }
-
-  if (role === "reward_giver") {
-    return <RewardGiverDashboard />;
-  }
-
-  return null;
+  return (
+    <AppShell>
+      {role === "task_user" ? <TaskUserDashboard /> : <RewardGiverDashboard />}
+    </AppShell>
+  );
 }
