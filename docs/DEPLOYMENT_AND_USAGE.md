@@ -147,15 +147,13 @@ Change the body to:
 <head>
   <meta charset="utf-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@800;900&family=Quicksand:wght@600;700&display=swap');
-    body { background-color: #121212; font-family: 'Quicksand', -apple-system, sans-serif; margin: 0; padding: 0; color: #ffffff; }
-    .wrapper { padding: 40px 20px; text-align: center; background-color: #121212; }
-    .container { max-width: 480px; margin: 0 auto; background-color: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 40px 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-    .heart { font-size: 48px; margin: 0 0 20px 0; }
-    h1 { font-family: 'Outfit', -apple-system, sans-serif; font-size: 24px; font-weight: 900; color: #ffffff; margin: 0 0 10px 0; letter-spacing: -0.5px; }
-    p { font-size: 14px; line-height: 1.6; color: rgba(255, 255, 255, 0.6); margin: 0 0 30px 0; }
-    .btn { display: inline-block; background-color: #ff4d8d; color: #ffffff !important; text-decoration: none; font-size: 14px; font-family: 'Outfit', sans-serif; font-weight: 900; padding: 14px 32px; border-radius: 16px; box-shadow: 0 4px 15px rgba(255, 77, 141, 0.3); }
-    .footer { font-size: 11px; color: rgba(255, 255, 255, 0.3); margin-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 20px; }
+    body { background-color: #121212; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; color: #ffffff; }
+    .wrapper { padding: 45px 20px; text-align: center; background-color: #121212; }
+    .container { max-width: 420px; margin: 0 auto; background-color: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 35px 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+    .heart { font-size: 44px; margin: 0 0 15px 0; }
+    h1 { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; letter-spacing: -0.5px; }
+    p { font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, 0.6); margin: 0 0 25px 0; }
+    .btn { display: inline-block; background-color: #ff4d8d; color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; padding: 12px 28px; border-radius: 14px; box-shadow: 0 4px 15px rgba(255, 77, 141, 0.3); }
   </style>
 </head>
 <body>
@@ -163,11 +161,8 @@ Change the body to:
     <div class="container">
       <div class="heart">💖</div>
       <h1>Welcome to BondXP</h1>
-      <p>Your private, relationship-powered productivity reward space is ready. Open the button to access your app.</p>
+      <p>Your private productivity reward space is ready. Open the button below to join your partner.</p>
       <a href="{{ .ConfirmationURL }}" class="btn">Enter Space</a>
-      <div class="footer">
-        Sent for BondXP.
-      </div>
     </div>
   </div>
 </body>
@@ -182,15 +177,13 @@ Change the body to:
 <head>
   <meta charset="utf-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@800;900&family=Quicksand:wght@600;700&display=swap');
-    body { background-color: #121212; font-family: 'Quicksand', -apple-system, sans-serif; margin: 0; padding: 0; color: #ffffff; }
-    .wrapper { padding: 40px 20px; text-align: center; background-color: #121212; }
-    .container { max-width: 480px; margin: 0 auto; background-color: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 40px 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-    .spark { font-size: 48px; margin: 0 0 20px 0; }
-    h1 { font-family: 'Outfit', -apple-system, sans-serif; font-size: 24px; font-weight: 900; color: #ffffff; margin: 0 0 10px 0; letter-spacing: -0.5px; }
-    p { font-size: 14px; line-height: 1.6; color: rgba(255, 255, 255, 0.6); margin: 0 0 30px 0; }
-    .btn { display: inline-block; background-color: #ff4d8d; color: #ffffff !important; text-decoration: none; font-size: 14px; font-family: 'Outfit', sans-serif; font-weight: 900; padding: 14px 32px; border-radius: 16px; box-shadow: 0 4px 15px rgba(255, 77, 141, 0.3); }
-    .footer { font-size: 11px; color: rgba(255, 255, 255, 0.3); margin-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 20px; }
+    body { background-color: #121212; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; color: #ffffff; }
+    .wrapper { padding: 45px 20px; text-align: center; background-color: #121212; }
+    .container { max-width: 420px; margin: 0 auto; background-color: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 35px 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+    .spark { font-size: 44px; margin: 0 0 15px 0; }
+    h1 { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; letter-spacing: -0.5px; }
+    p { font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, 0.6); margin: 0 0 25px 0; }
+    .btn { display: inline-block; background-color: #ff4d8d; color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; padding: 12px 28px; border-radius: 14px; box-shadow: 0 4px 15px rgba(255, 77, 141, 0.3); }
   </style>
 </head>
 <body>
@@ -198,11 +191,8 @@ Change the body to:
     <div class="container">
       <div class="spark">✨</div>
       <h1>Log In to BondXP</h1>
-      <p>Open the button to join your partner in the app.</p>
+      <p>Open the button below to log back into your private space instantly.</p>
       <a href="{{ .ConfirmationURL }}" class="btn">Log In</a>
-      <div class="footer">
-        Sent for BondXP.
-      </div>
     </div>
   </div>
 </body>
