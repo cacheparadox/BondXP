@@ -12,32 +12,32 @@ const config: Config = {
       colors: {
         // BondXP Design Tokens
         dark: {
-          DEFAULT: "#121212",
-          50: "#1E1E1E",
-          100: "#252525",
+          DEFAULT: "var(--color-bg)",
+          50: "var(--color-card)",
+          100: "var(--color-card-hover)",
           200: "#2E2E2E",
           300: "#3A3A3A",
         },
         primary: {
-          DEFAULT: "#FF4D8D",
+          DEFAULT: "var(--color-primary)",
           50: "#FFE8F0",
           100: "#FFD6E0",
           200: "#FFB3CB",
-          300: "#FF8FB1",
+          300: "var(--color-accent)",
           400: "#FF6B9D",
-          500: "#FF4D8D",
+          500: "var(--color-primary)",
           600: "#E83578",
           700: "#C01D60",
           800: "#9A0F4B",
           900: "#780639",
         },
         accent: {
-          DEFAULT: "#FF8FB1",
-          light: "#FFD6E0",
+          DEFAULT: "var(--color-accent)",
+          light: "var(--color-accent-light)",
         },
-        success: "#6EE7B7",
-        warning: "#FBBF24",
-        danger: "#F87171",
+        success: "var(--color-success)",
+        warning: "var(--color-warning)",
+        danger: "var(--color-danger)",
         info: "#60A5FA",
         
         // Shadcn UI mapped colors
@@ -75,9 +75,9 @@ const config: Config = {
         inter: ["var(--font-inter)", "sans-serif"],
       },
       backgroundImage: {
-        "gradient-primary": "linear-gradient(135deg, #FF4D8D 0%, #FF8FB1 100%)",
-        "gradient-dark": "linear-gradient(180deg, #1E1E1E 0%, #121212 100%)",
-        "gradient-glow": "radial-gradient(ellipse at center, rgba(255,77,141,0.15) 0%, transparent 70%)",
+        "gradient-primary": "linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%)",
+        "gradient-dark": "linear-gradient(180deg, var(--color-card) 0%, var(--color-bg) 100%)",
+        "gradient-glow": "radial-gradient(ellipse at center, var(--color-primary-glow) 0%, transparent 70%)",
         "shimmer": "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)",
       },
       boxShadow: {

@@ -300,18 +300,39 @@ export interface Badge {
 
 export const BADGES: Badge[] = [
   {
+    id: "baby_steps",
+    title: "Baby Steps",
+    icon: "🐣",
+    description: "Completed your first logged task.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 1,
+  },
+  {
     id: "discipline_demon",
     title: "Discipline Demon",
     icon: "😈",
-    description: "Hit a 7-day streak.",
+    description: "Hit an active 7-day streak.",
     unlockCondition: ({ currentStreak }) => currentStreak >= 7,
+  },
+  {
+    id: "habit_builder",
+    title: "Habit Builder",
+    icon: "🔨",
+    description: "Hit an active 14-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 14,
   },
   {
     id: "locked_in",
     title: "Locked In",
     icon: "🔒",
-    description: "Hit a 30-day streak.",
+    description: "Hit an active 30-day streak.",
     unlockCondition: ({ currentStreak }) => currentStreak >= 30,
+  },
+  {
+    id: "streak_legend",
+    title: "Streak Legend",
+    icon: "👑",
+    description: "Hit an active 50-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 50,
   },
   {
     id: "seven_day_beast",
@@ -326,6 +347,20 @@ export const BADGES: Badge[] = [
     icon: "⚡",
     description: "Accumulated 60 lifetime tasks.",
     unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 60,
+  },
+  {
+    id: "task_titan",
+    title: "Task Titan",
+    icon: "⚔️",
+    description: "Accumulated 100 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 100,
+  },
+  {
+    id: "relentless",
+    title: "Relentless",
+    icon: "🔥",
+    description: "Accumulated 200 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 200,
   },
   {
     id: "unbreakable",
