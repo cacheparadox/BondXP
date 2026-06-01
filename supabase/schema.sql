@@ -195,13 +195,35 @@ ALTER TABLE analytics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE couple_sessions ENABLE ROW LEVEL SECURITY;
 
+-- ============================================================
+-- HELPER: get current user's couple_session_id without RLS
+-- SECURITY DEFINER bypasses RLS to break infinite recursion
+-- ============================================================
+CREATE OR REPLACE FUNCTION get_my_couple_session_id()
+RETURNS UUID
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT couple_session_id FROM users WHERE id = auth.uid() LIMIT 1;
+$$;
+
+CREATE OR REPLACE FUNCTION get_my_role()
+RETURNS TEXT
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT role FROM users WHERE id = auth.uid() LIMIT 1;
+$$;
+
 -- Users: can read their own row + their partner's (same couple_session)
 CREATE POLICY "users_select_own_couple" ON users
   FOR SELECT USING (
     auth.uid() = id
-    OR couple_session_id IN (
-      SELECT couple_session_id FROM users WHERE id = auth.uid()
-    )
+    OR couple_session_id = get_my_couple_session_id()
   );
 
 CREATE POLICY "users_update_own" ON users
@@ -214,10 +236,7 @@ CREATE POLICY "users_insert_own" ON users
 CREATE POLICY "tasks_couple_access" ON tasks
   FOR SELECT USING (
     user_id IN (
-      SELECT id FROM users
-      WHERE couple_session_id = (
-        SELECT couple_session_id FROM users WHERE id = auth.uid()
-      )
+      SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );
 
@@ -228,9 +247,7 @@ CREATE POLICY "tasks_insert_own" ON tasks
 CREATE POLICY "daily_progress_couple" ON daily_progress
   FOR SELECT USING (
     user_id IN (
-      SELECT id FROM users WHERE couple_session_id = (
-        SELECT couple_session_id FROM users WHERE id = auth.uid()
-      )
+      SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );
 
@@ -241,9 +258,7 @@ CREATE POLICY "daily_progress_upsert_own" ON daily_progress
 CREATE POLICY "streaks_couple" ON streaks
   FOR SELECT USING (
     user_id IN (
-      SELECT id FROM users WHERE couple_session_id = (
-        SELECT couple_session_id FROM users WHERE id = auth.uid()
-      )
+      SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );
 
@@ -257,9 +272,7 @@ CREATE POLICY "streak_claims_own_insert" ON streak_reward_claims
 CREATE POLICY "streak_claims_couple_select" ON streak_reward_claims
   FOR SELECT USING (
     user_id IN (
-      SELECT id FROM users WHERE couple_session_id = (
-        SELECT couple_session_id FROM users WHERE id = auth.uid()
-      )
+      SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );
 
@@ -267,9 +280,7 @@ CREATE POLICY "streak_claims_couple_select" ON streak_reward_claims
 CREATE POLICY "task_bank_couple" ON task_bank
   FOR SELECT USING (
     user_id IN (
-      SELECT id FROM users WHERE couple_session_id = (
-        SELECT couple_session_id FROM users WHERE id = auth.uid()
-      )
+      SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );
 
@@ -279,30 +290,24 @@ CREATE POLICY "task_bank_own" ON task_bank
 -- Rewards: couple sees all active (hidden rewards only visible to reward_giver)
 CREATE POLICY "rewards_couple" ON rewards
   FOR SELECT USING (
-    couple_session_id IN (
-      SELECT couple_session_id FROM users WHERE id = auth.uid()
-    )
+    couple_session_id = get_my_couple_session_id()
     AND (
       hidden = FALSE
-      OR (SELECT role FROM users WHERE id = auth.uid()) = 'reward_giver'
+      OR get_my_role() = 'reward_giver'
     )
   );
 
 CREATE POLICY "rewards_giver_manage" ON rewards
   FOR ALL USING (
-    (SELECT role FROM users WHERE id = auth.uid()) = 'reward_giver'
-    AND couple_session_id IN (
-      SELECT couple_session_id FROM users WHERE id = auth.uid()
-    )
+    get_my_role() = 'reward_giver'
+    AND couple_session_id = get_my_couple_session_id()
   );
 
 -- Redemptions: couple can view
 CREATE POLICY "redemptions_couple" ON redemptions
   FOR SELECT USING (
     user_id IN (
-      SELECT id FROM users WHERE couple_session_id = (
-        SELECT couple_session_id FROM users WHERE id = auth.uid()
-      )
+      SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );
 
@@ -310,9 +315,7 @@ CREATE POLICY "redemptions_task_user_insert" ON redemptions
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "redemptions_giver_update" ON redemptions
-  FOR UPDATE USING (
-    (SELECT role FROM users WHERE id = auth.uid()) = 'reward_giver'
-  );
+  FOR UPDATE USING (get_my_role() = 'reward_giver');
 
 -- Notifications: own only
 CREATE POLICY "notifications_own" ON notifications
@@ -322,9 +325,7 @@ CREATE POLICY "notifications_own" ON notifications
 CREATE POLICY "analytics_couple" ON analytics
   FOR SELECT USING (
     user_id IN (
-      SELECT id FROM users WHERE couple_session_id = (
-        SELECT couple_session_id FROM users WHERE id = auth.uid()
-      )
+      SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );
 
@@ -337,9 +338,7 @@ CREATE POLICY "push_subs_own" ON push_subscriptions
 
 -- Couple sessions: members can view their own
 CREATE POLICY "couple_sessions_member" ON couple_sessions
-  FOR SELECT USING (
-    id IN (SELECT couple_session_id FROM users WHERE id = auth.uid())
-  );
+  FOR SELECT USING (id = get_my_couple_session_id());
 
 CREATE POLICY "couple_sessions_insert" ON couple_sessions
   FOR INSERT WITH CHECK (true);
