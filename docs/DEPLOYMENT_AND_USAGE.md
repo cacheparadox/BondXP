@@ -151,7 +151,7 @@ Change the body to:
     .wrapper { padding: 45px 20px; text-align: center; background-color: #121212; }
     .container { max-width: 420px; margin: 0 auto; background-color: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 35px 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
     .heart { font-size: 44px; margin: 0 0 15px 0; }
-    h1 { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; letter-spacing: -0.5px; }
+    h2 { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; letter-spacing: -0.5px; }
     p { font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, 0.6); margin: 0 0 25px 0; }
     .btn { display: inline-block; background-color: #ff4d8d; color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; padding: 12px 28px; border-radius: 14px; box-shadow: 0 4px 15px rgba(255, 77, 141, 0.3); }
   </style>
@@ -160,9 +160,9 @@ Change the body to:
   <div class="wrapper">
     <div class="container">
       <div class="heart">💖</div>
-      <h1>Welcome to BondXP</h1>
-      <p>Your private productivity reward space is ready. Open the button below to join your partner.</p>
-      <a href="{{ .ConfirmationURL }}" class="btn">Enter Space</a>
+      <h2>Confirm your email address</h2>
+      <p>Follow the link below to confirm this email address and finish signing up.</p>
+      <a href="{{ .ConfirmationURL }}" class="btn">Confirm email address</a>
     </div>
   </div>
 </body>
