@@ -7,7 +7,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { createClient } from "@/lib/supabase/client";
 import { BADGES } from "@/types/supabase";
 import { motion } from "framer-motion";
-import { User, Bell, Palette, Award, Check, Sparkles, AlertCircle, RefreshCw } from "lucide-react";
+import { User, Bell, Palette, Award, Check, Sparkles, AlertCircle, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<any>(null);
   const [streak, setStreak] = useState<any>(null);
   const [bank, setBank] = useState<any>(null);
+  const [wishesMet, setWishesMet] = useState(0);
 
   // Form States
   const [displayName, setDisplayName] = useState("");
@@ -100,6 +101,13 @@ export default function SettingsPage() {
         .single();
       setBank(b);
 
+      const { count: wishesCount } = await supabase
+        .from("redemptions")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", taskUserId)
+        .in("status", ["approved", "scheduled"]);
+      setWishesMet(wishesCount || 0);
+
     } catch (err) {
       console.error(err);
       toast.error("Failed to load settings");
@@ -160,13 +168,77 @@ export default function SettingsPage() {
     }
   };
 
-  const handleResetTheme = () => {
+  const handleResetTheme = async () => {
+    if (!confirm("Are you sure you want to reset all your theme customizations to defaults?")) {
+      return;
+    }
+
     setPrimaryColor("#FF4D8D");
     setBgColor("#121212");
     setCardColor("#1E1E1E");
     setFontHeading("Outfit");
     setFontBody("Inter");
-    toast.info("Theme reset to defaults. Remember to click save!");
+
+    try {
+      // Save empty theme config directly to database
+      const { error } = await (supabase
+        .from("users") as any)
+        .update({ theme_config: {} })
+        .eq("id", profile?.id);
+
+      if (error) throw error;
+
+      // Update localStorage
+      localStorage.removeItem("bondxp-theme");
+
+      // Reset CSS variables
+      const root = document.documentElement;
+      root.style.removeProperty("--color-primary");
+      root.style.removeProperty("--color-primary-glow");
+      root.style.removeProperty("--color-bg");
+      root.style.removeProperty("--color-card");
+      root.style.removeProperty("--color-card-hover");
+      root.style.removeProperty("--font-heading");
+      root.style.removeProperty("--font-body");
+
+      toast.success("Theme and customizations reset to defaults successfully! ❤️");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reset customizations in database");
+    }
+  };
+
+  const handleDeleteProfile = async () => {
+    const message = "WARNING: Deleting your profile will permanently erase your user account, task history, streaks, and relationship data for your account. This action CANNOT be undone.\n\nType 'DELETE' to confirm:";
+    const confirmation = prompt(message);
+    if (confirmation !== "DELETE") {
+      toast.error("Deletion canceled. Input did not match 'DELETE'.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      
+      // Delete user row from public.users (will cascade delete related tasks, streaks, etc.)
+      const { error } = await (supabase
+        .from("users") as any)
+        .delete()
+        .eq("id", profile?.id);
+
+      if (error) throw error;
+
+      // Clear theme from localStorage
+      localStorage.removeItem("bondxp-theme");
+
+      // Sign out of Supabase
+      await supabase.auth.signOut();
+
+      toast.success("Profile deleted successfully. Redirecting...");
+      router.push("/login");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImportRewards = async () => {
@@ -249,6 +321,7 @@ export default function SettingsPage() {
     currentStreak: streak?.current_streak || 0,
     longestStreak: streak?.longest_streak || 0,
     lifetimeTasks: bank?.lifetime_tasks || 0,
+    wishesMet: wishesMet || 0,
   };
 
   return (
@@ -499,6 +572,36 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+
+          {/* Section: Danger Zone */}
+          <div className="card border-red-500/20 bg-red-500/5 p-6 space-y-4 mt-6">
+            <h3 className="text-xs font-heading font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5 border-b border-red-500/10 pb-2">
+              <AlertCircle className="w-4 h-4 text-red-500" />
+              Danger Zone
+            </h3>
+            
+            <p className="text-[10px] text-white/50 leading-relaxed font-body">
+              Perform destructive actions on your account profile and customizations. These actions are permanent.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={handleResetTheme}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-white/[0.08] hover:border-white/20 bg-white/[0.02] text-xs font-heading font-bold text-white transition-all cursor-pointer text-center"
+              >
+                Reset Customizations
+              </button>
+              
+              <button
+                type="button"
+                onClick={handleDeleteProfile}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-red-500/20 hover:border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-xs font-heading font-bold text-red-400 transition-all cursor-pointer text-center"
+              >
+                Delete Profile & Account
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* RIGHT COLUMN: Achievement Badge Collection */}
@@ -510,7 +613,7 @@ export default function SettingsPage() {
             </h3>
 
             {/* Badges Stack */}
-            <div className="space-y-4">
+            <div className="space-y-3 max-h-[650px] overflow-y-auto pr-1">
               {BADGES.map((badge) => {
                 const isUnlocked = badge.unlockCondition(badgeStats);
 

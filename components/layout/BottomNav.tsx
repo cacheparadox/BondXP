@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Gift, BarChart2, Settings } from "lucide-react";
+import { Home, Gift, Heart, BarChart2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -18,6 +18,7 @@ export default function BottomNav() {
   const navItems: NavItem[] = [
     { label: "Home", href: "/dashboard", icon: Home },
     { label: "Rewards", href: "/rewards", icon: Gift },
+    { label: "Cute Corner", href: "/notes", icon: Heart },
     { label: "Analytics", href: "/analytics", icon: BarChart2 },
     { label: "Settings", href: "/settings", icon: Settings },
   ];

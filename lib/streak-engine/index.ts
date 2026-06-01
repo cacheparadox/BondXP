@@ -14,7 +14,8 @@ import { STREAK_MILESTONES, type StreakMilestone } from "@/types/supabase";
 export async function logTaskAndCheckStreak(
   supabase: SupabaseClient<Database>,
   userId: string,
-  localDateStr: string // Format: 'YYYY-MM-DD'
+  localDateStr: string, // Format: 'YYYY-MM-DD'
+  taskValue: number = 1
 ): Promise<{
   tasksCompletedToday: number;
   streakQualified: boolean;
@@ -29,11 +30,11 @@ export async function logTaskAndCheckStreak(
     .eq("date", localDateStr)
     .single();
 
-  let completedToday = 1;
+  let completedToday = taskValue;
   let qualifiedToday = false;
 
   if (progress) {
-    completedToday = progress.tasks_completed + 1;
+    completedToday = progress.tasks_completed + taskValue;
     qualifiedToday = progress.streak_qualified;
   }
 
@@ -63,7 +64,7 @@ export async function logTaskAndCheckStreak(
     .eq("user_id", userId)
     .single();
 
-  const lifetime = (bankData?.lifetime_tasks || 0) + 1;
+  const lifetime = (bankData?.lifetime_tasks || 0) + taskValue;
   const spent = bankData?.spent_tasks || 0;
 
   const { error: bankError } = await (supabase

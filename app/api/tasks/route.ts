@@ -92,11 +92,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, category, icon, note, localDate } = body;
+    const { title, category, icon, note, localDate, value } = body;
 
     if (!title || !localDate) {
       return NextResponse.json({ error: "Missing title or localDate" }, { status: 400 });
     }
+
+    const taskValue = typeof value === "number" && value > 0 ? value : 1;
 
     // 1. Insert task into database
     const { data: taskData, error: taskError } = await (supabase
@@ -107,6 +109,7 @@ export async function POST(request: Request) {
         category: category || "Other",
         icon: icon || "📝",
         note: note || "",
+        value: taskValue,
       })
       .select()
       .single();
@@ -114,7 +117,7 @@ export async function POST(request: Request) {
     if (taskError) throw taskError;
 
     // 2. Process streak validation & task bank logic
-    const streakResult = await logTaskAndCheckStreak(supabase, user.id, localDate);
+    const streakResult = await logTaskAndCheckStreak(supabase, user.id, localDate, taskValue);
 
     // 3. Create milestone notifications if unlocked
     if (streakResult.milestoneUnlocked) {

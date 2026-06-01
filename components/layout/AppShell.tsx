@@ -59,6 +59,7 @@ export default function AppShell({ children }: AppShellProps) {
   const menuItems = [
     { label: "Home", href: "/dashboard", icon: Home },
     { label: "Rewards", href: "/rewards", icon: Gift },
+    { label: "Cute Corner", href: "/notes", icon: Heart },
     { label: "Analytics", href: "/analytics", icon: BarChart2 },
     { label: "Settings", href: "/settings", icon: Settings },
   ];

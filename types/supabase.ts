@@ -64,11 +64,13 @@ export interface Database {
           category: string | null;
           icon: string | null;
           note: string | null;
+          value: number;
           completed_at: string;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["tasks"]["Row"], "id" | "created_at" | "completed_at"> & {
+        Insert: Omit<Database["public"]["Tables"]["tasks"]["Row"], "id" | "created_at" | "completed_at" | "value"> & {
           id?: string;
+          value?: number;
           completed_at?: string;
           created_at?: string;
         };
@@ -192,6 +194,22 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["analytics"]["Row"], "id"> & { id?: string };
         Update: Partial<Omit<Database["public"]["Tables"]["analytics"]["Row"], "id">>;
       };
+
+      notes: {
+        Row: {
+          id: string;
+          couple_session_id: string;
+          sender_id: string;
+          content: string;
+          image_url: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["notes"]["Row"], "id" | "created_at"> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<Database["public"]["Tables"]["notes"]["Row"], "id" | "created_at">>;
+      };
     };
   };
 }
@@ -212,6 +230,7 @@ export type StreakRewardClaim = Database["public"]["Tables"]["streak_reward_clai
 export type Analytics = Database["public"]["Tables"]["analytics"]["Row"];
 export type CoupleSession = Database["public"]["Tables"]["couple_sessions"]["Row"];
 export type PushSubscription = Database["public"]["Tables"]["push_subscriptions"]["Row"];
+export type Note = Database["public"]["Tables"]["notes"]["Row"];
 
 // ================================================================
 // Theme Config
@@ -295,7 +314,7 @@ export interface Badge {
   title: string;
   icon: string;
   description: string;
-  unlockCondition: (stats: { currentStreak: number; longestStreak: number; lifetimeTasks: number }) => boolean;
+  unlockCondition: (stats: { currentStreak: number; longestStreak: number; lifetimeTasks: number; wishesMet: number }) => boolean;
 }
 
 export const BADGES: Badge[] = [
@@ -307,46 +326,46 @@ export const BADGES: Badge[] = [
     unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 1,
   },
   {
-    id: "discipline_demon",
-    title: "Discipline Demon",
-    icon: "😈",
-    description: "Hit an active 7-day streak.",
-    unlockCondition: ({ currentStreak }) => currentStreak >= 7,
+    id: "high_five",
+    title: "High Five",
+    icon: "✋",
+    description: "Completed 5 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 5,
   },
   {
-    id: "habit_builder",
-    title: "Habit Builder",
-    icon: "🔨",
-    description: "Hit an active 14-day streak.",
-    unlockCondition: ({ currentStreak }) => currentStreak >= 14,
+    id: "getting_warm",
+    title: "Getting Warm",
+    icon: "🔥",
+    description: "Completed 10 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 10,
   },
   {
-    id: "locked_in",
-    title: "Locked In",
-    icon: "🔒",
-    description: "Hit an active 30-day streak.",
-    unlockCondition: ({ currentStreak }) => currentStreak >= 30,
+    id: "dynamic_duo",
+    title: "Dynamic Duo",
+    icon: "🤝",
+    description: "Completed 20 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 20,
   },
   {
-    id: "streak_legend",
-    title: "Streak Legend",
-    icon: "👑",
-    description: "Hit an active 50-day streak.",
-    unlockCondition: ({ currentStreak }) => currentStreak >= 50,
-  },
-  {
-    id: "seven_day_beast",
-    title: "7-Day Beast",
-    icon: "🦁",
-    description: "Completed your first 7-day streak.",
-    unlockCondition: ({ longestStreak }) => longestStreak >= 7,
+    id: "duo_power",
+    title: "Duo Power",
+    icon: "⚡",
+    description: "Completed 40 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 40,
   },
   {
     id: "consistency_arc",
     title: "Consistency Arc",
-    icon: "⚡",
+    icon: "📈",
     description: "Accumulated 60 lifetime tasks.",
     unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 60,
+  },
+  {
+    id: "efficiency_experts",
+    title: "Efficiency Experts",
+    icon: "⚙️",
+    description: "Completed 80 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 80,
   },
   {
     id: "task_titan",
@@ -356,18 +375,228 @@ export const BADGES: Badge[] = [
     unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 100,
   },
   {
+    id: "century_club",
+    title: "Century Club",
+    icon: "💯",
+    description: "Completed 150 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 150,
+  },
+  {
     id: "relentless",
     title: "Relentless",
-    icon: "🔥",
+    icon: "🦁",
     description: "Accumulated 200 lifetime tasks.",
     unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 200,
   },
   {
+    id: "workhorse",
+    title: "Workhorse",
+    icon: "🐴",
+    description: "Completed 300 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 300,
+  },
+  {
+    id: "milestone_mastery",
+    title: "Milestone Mastery",
+    icon: "🏆",
+    description: "Completed 400 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 400,
+  },
+  {
+    id: "task_overlord",
+    title: "Task Overlord",
+    icon: "👑",
+    description: "Completed 500 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 500,
+  },
+  {
+    id: "apex_achievers",
+    title: "Apex Achievers",
+    icon: "🗻",
+    description: "Completed 750 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 750,
+  },
+  {
+    id: "grandmasters",
+    title: "Grandmasters",
+    icon: "🧙‍♂️",
+    description: "Completed 1000 lifetime tasks.",
+    unlockCondition: ({ lifetimeTasks }) => lifetimeTasks >= 1000,
+  },
+  {
+    id: "spark_initiator",
+    title: "Spark Initiator",
+    icon: "✨",
+    description: "Hit an active 3-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 3,
+  },
+  {
+    id: "five_star_duo",
+    title: "Five-Star Duo",
+    icon: "⭐",
+    description: "Hit an active 5-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 5,
+  },
+  {
+    id: "discipline_demon",
+    title: "Discipline Demon",
+    icon: "😈",
+    description: "Hit an active 7-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 7,
+  },
+  {
+    id: "double_digits",
+    title: "Double Digits",
+    icon: "🔟",
+    description: "Hit an active 10-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 10,
+  },
+  {
+    id: "habit_builder",
+    title: "Habit Builder",
+    icon: "🔨",
+    description: "Hit an active 14-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 14,
+  },
+  {
+    id: "three_weeks_strong",
+    title: "Three Weeks Strong",
+    icon: "📅",
+    description: "Hit an active 21-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 21,
+  },
+  {
+    id: "locked_in",
+    title: "Locked In",
+    icon: "🔒",
+    description: "Hit an active 30-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 30,
+  },
+  {
+    id: "half_century_run",
+    title: "Half Century Run",
+    icon: "🏃‍♂️",
+    description: "Hit an active 45-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 45,
+  },
+  {
+    id: "streak_legend",
+    title: "Streak Legend",
+    icon: "🌟",
+    description: "Hit an active 50-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 50,
+  },
+  {
+    id: "diamond_bond",
+    title: "Diamond Bond",
+    icon: "💎",
+    description: "Hit an active 75-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 75,
+  },
+  {
+    id: "century_streak",
+    title: "Century Streak",
+    icon: "💯",
+    description: "Hit an active 100-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 100,
+  },
+  {
+    id: "untouchable",
+    title: "Untouchable",
+    icon: "🚀",
+    description: "Hit an active 150-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 150,
+  },
+  {
+    id: "year_of_bond",
+    title: "Year of Bond",
+    icon: "☀️",
+    description: "Hit an active 365-day streak.",
+    unlockCondition: ({ currentStreak }) => currentStreak >= 365,
+  },
+  {
+    id: "seven_day_beast",
+    title: "7-Day Beast",
+    icon: "🐾",
+    description: "Achieved a longest streak of 7 days.",
+    unlockCondition: ({ longestStreak }) => longestStreak >= 7,
+  },
+  {
+    id: "fortnight_focus",
+    title: "Fortnight Focus",
+    icon: "🌗",
+    description: "Achieved a longest streak of 14 days.",
+    unlockCondition: ({ longestStreak }) => longestStreak >= 14,
+  },
+  {
     id: "unbreakable",
     title: "Unbreakable",
-    icon: "💎",
-    description: "Achieved a 30-day streak and never broke it.",
+    icon: "🛡️",
+    description: "Achieved a longest streak of 30 days.",
     unlockCondition: ({ longestStreak }) => longestStreak >= 30,
+  },
+  {
+    id: "golden_milestone",
+    title: "Golden Milestone",
+    icon: "🥇",
+    description: "Achieved a longest streak of 50 days.",
+    unlockCondition: ({ longestStreak }) => longestStreak >= 50,
+  },
+  {
+    id: "titanium_streak",
+    title: "Titanium Streak",
+    icon: "🔩",
+    description: "Achieved a longest streak of 75 days.",
+    unlockCondition: ({ longestStreak }) => longestStreak >= 75,
+  },
+  {
+    id: "centurion_hall",
+    title: "Centurion Hall",
+    icon: "🏛️",
+    description: "Achieved a longest streak of 100 days.",
+    unlockCondition: ({ longestStreak }) => longestStreak >= 100,
+  },
+  {
+    id: "first_wish",
+    title: "First Wish",
+    icon: "🎁",
+    description: "Had 1 wish met/redeemed.",
+    unlockCondition: ({ wishesMet }) => wishesMet >= 1,
+  },
+  {
+    id: "spoiled_sweet",
+    title: "Spoiled Sweet",
+    icon: "🍭",
+    description: "Had 5 wishes met/redeemed.",
+    unlockCondition: ({ wishesMet }) => wishesMet >= 5,
+  },
+  {
+    id: "affection_abundance",
+    title: "Affection Abundance",
+    icon: "💖",
+    description: "Had 15 wishes met/redeemed.",
+    unlockCondition: ({ wishesMet }) => wishesMet >= 15,
+  },
+  {
+    id: "wishmaster",
+    title: "Wishmaster",
+    icon: "🧞‍♂️",
+    description: "Had 30 wishes met/redeemed.",
+    unlockCondition: ({ wishesMet }) => wishesMet >= 30,
+  },
+  {
+    id: "pampered_partner",
+    title: "Pampered Partner",
+    icon: "👑",
+    description: "Had 50 wishes met/redeemed.",
+    unlockCondition: ({ wishesMet }) => wishesMet >= 50,
+  },
+  {
+    id: "dream_relationship",
+    title: "Dream Relationship",
+    icon: "🌌",
+    description: "Had 100 wishes met/redeemed.",
+    unlockCondition: ({ wishesMet }) => wishesMet >= 100,
   },
 ];
 

@@ -30,6 +30,7 @@ export default function TaskUserDashboard() {
   const [customTitle, setCustomTitle] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Other");
   const [selectedIcon, setSelectedIcon] = useState("📝");
+  const [taskValue, setTaskValue] = useState(1);
 
   // Animations State (list of floating XP triggers)
   const [floatingXPs, setFloatingXPs] = useState<{ id: string; x: number; y: number; text: string }[]>([]);
@@ -118,7 +119,7 @@ export default function TaskUserDashboard() {
     setFloatingXPs((prev) => [...prev, newXp]);
   };
 
-  const handleAddTask = async (title: string, category: string, icon: string) => {
+  const handleAddTask = async (title: string, category: string, icon: string, value: number = 1) => {
     if (!title.trim()) return;
 
     try {
@@ -130,6 +131,7 @@ export default function TaskUserDashboard() {
           category,
           icon,
           localDate: localDateStr,
+          value,
         }),
       });
 
@@ -144,10 +146,10 @@ export default function TaskUserDashboard() {
         }));
         setBank((prev: any) => ({
           ...prev,
-          available_tasks: (prev?.available_tasks || 0) + 1,
+          available_tasks: (prev?.available_tasks || 0) + (res.task.value || 1),
         }));
 
-        triggerFloatingXP(`+1 TASK ${icon}`);
+        triggerFloatingXP(`+${res.task.value || 1} TASK ${icon}`);
 
         if (res.milestoneUnlocked) {
           toast.success(`Milestone Unlocked: ${res.milestoneUnlocked.title}! 🎉`);
@@ -218,6 +220,7 @@ export default function TaskUserDashboard() {
     setFloatingXPs((prev) => prev.filter((xp) => xp.id !== id));
   };
 
+  const totalTasksCompleted = tasks.reduce((sum, t) => sum + (t.value || 1), 0);
   const nextMilestone = getNextStreakMilestone(streak?.current_streak || 0);
 
   if (loading) {
@@ -258,9 +261,9 @@ export default function TaskUserDashboard() {
         <div className="space-y-6 md:col-span-1">
           {/* Progress Ring Card */}
           <div className="card bg-white/[0.02] border-white/[0.06] flex flex-col items-center justify-center text-center p-6">
-            <ProgressRing completed={tasks.length} required={10} />
+            <ProgressRing completed={totalTasksCompleted} required={10} />
             <h3 className="text-sm font-heading font-bold text-white/90 mt-6 max-w-[200px]">
-              {getMotivationalMessage(tasks.length, 10)}
+              {getMotivationalMessage(totalTasksCompleted, 10)}
             </h3>
             
             <div className="flex items-center gap-1.5 justify-center mt-3 text-xs text-white/40">
@@ -392,27 +395,49 @@ export default function TaskUserDashboard() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleAddTask(customTitle, selectedCategory, selectedIcon);
+                handleAddTask(customTitle, selectedCategory, selectedIcon, taskValue);
                 setCustomTitle("");
+                setTaskValue(1);
               }}
-              className="flex gap-2"
+              className="space-y-3"
             >
-              <input
-                type="text"
-                value={customTitle}
-                onChange={(e) => setCustomTitle(e.target.value)}
-                placeholder="What did you get done?"
-                className="input flex-1"
-                maxLength={45}
-                required
-              />
-              <button
-                type="submit"
-                ref={addButtonRef}
-                className="btn-primary px-4 py-3 flex items-center justify-center cursor-pointer"
-              >
-                <Plus className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customTitle}
+                  onChange={(e) => setCustomTitle(e.target.value)}
+                  placeholder="What did you get done?"
+                  className="input flex-1"
+                  maxLength={45}
+                  required
+                />
+                
+                <select
+                  value={taskValue}
+                  onChange={(e) => setTaskValue(Number(e.target.value))}
+                  className="input py-3 w-28 select-custom text-center font-heading font-bold text-xs"
+                  title="How many standard tasks is this worth?"
+                >
+                  <option value={1}>1 Task</option>
+                  <option value={2}>2 Tasks</option>
+                  <option value={3}>3 Tasks</option>
+                  <option value={5}>5 Tasks</option>
+                  <option value={10}>10 Tasks</option>
+                  <option value={15}>15 Tasks</option>
+                  <option value={20}>20 Tasks</option>
+                </select>
+                
+                <button
+                  type="submit"
+                  ref={addButtonRef}
+                  className="btn-primary px-4 py-3 flex items-center justify-center cursor-pointer"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-[10px] text-white/40 font-body pl-1">
+                Select a higher task weight for big achievements (e.g. 10 tasks for finishing a project) to count more towards your streak!
+              </p>
             </form>
           </div>
 
@@ -421,7 +446,7 @@ export default function TaskUserDashboard() {
             <h2 className="text-sm font-heading font-bold uppercase tracking-wider text-white/70 mb-4 flex items-center justify-between">
               <span>Today's Logged Tasks</span>
               <span className="badge-primary px-2.5 py-0.5 text-[10px]">
-                {tasks.length} Completed
+                {totalTasksCompleted} Completed
               </span>
             </h2>
 
@@ -449,6 +474,11 @@ export default function TaskUserDashboard() {
                             <span className="bg-white/[0.05] px-1.5 py-0.5 rounded text-[8px] uppercase font-bold text-white/60">
                               {task.category}
                             </span>
+                            {task.value > 1 && (
+                              <span className="bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded text-[8px] uppercase font-bold">
+                                {task.value}x Weight
+                              </span>
+                            )}
                             <span>•</span>
                             <span className="flex items-center gap-0.5">
                               <Clock className="w-2.5 h-2.5" />

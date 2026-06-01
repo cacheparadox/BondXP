@@ -58,6 +58,7 @@ CREATE TABLE tasks (
   category          TEXT,
   icon              TEXT,
   note              TEXT,
+  value             INT DEFAULT 1,
   completed_at      TIMESTAMPTZ DEFAULT NOW(),
   created_at        TIMESTAMPTZ DEFAULT NOW()
 );
@@ -371,3 +372,56 @@ END;
 $$ LANGUAGE plpgsql;
 
 ALTER TABLE couple_sessions ALTER COLUMN invite_code SET DEFAULT generate_invite_code();
+
+-- ============================================================
+-- NOTES — Cute Corner Love Notes
+-- ============================================================
+CREATE TABLE notes (
+  id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  couple_session_id  UUID REFERENCES couple_sessions(id) ON DELETE CASCADE,
+  sender_id          UUID REFERENCES users(id) ON DELETE CASCADE,
+  content            TEXT NOT NULL,
+  image_url          TEXT,
+  created_at         TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+
+-- Note Policies
+CREATE POLICY "notes_select_couple" ON notes
+  FOR SELECT USING (couple_session_id = get_my_couple_session_id());
+
+CREATE POLICY "notes_insert_couple" ON notes
+  FOR INSERT WITH CHECK (
+    couple_session_id = get_my_couple_session_id()
+    AND auth.uid() = sender_id
+  );
+
+CREATE POLICY "notes_delete_couple" ON notes
+  FOR DELETE USING (couple_session_id = get_my_couple_session_id());
+
+-- Storage bucket for notes-images
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('notes-images', 'notes-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policies
+CREATE POLICY "notes_images_select" ON storage.objects
+  FOR SELECT USING (bucket_id = 'notes-images');
+
+CREATE POLICY "notes_images_insert" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'notes-images'
+    AND auth.role() = 'authenticated'
+  );
+
+CREATE POLICY "notes_images_delete" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'notes-images'
+    AND auth.role() = 'authenticated'
+  );
+
+-- Allow users to delete their own profile
+CREATE POLICY "users_delete_own" ON users
+  FOR DELETE USING (auth.uid() = id);

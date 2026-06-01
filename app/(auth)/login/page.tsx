@@ -91,7 +91,7 @@ function LoginForm() {
           return;
         }
 
-        data = signUpResult.data;
+        data = signUpResult.data as any;
       } else if (error) {
         toast.error(error.message);
         setLoading(false);
