@@ -1,0 +1,381 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================================================================
+   GOOGLE FONTS
+   ================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* ================================================================
+   CSS CUSTOM PROPERTIES — Runtime Theme Variables
+   These are overridden by the theme customization screen
+   ================================================================ */
+:root {
+  --color-bg:           #121212;
+  --color-card:         #1E1E1E;
+  --color-card-hover:   #252525;
+  --color-border:       rgba(255, 255, 255, 0.08);
+  --color-primary:      #FF4D8D;
+  --color-primary-glow: rgba(255, 77, 141, 0.35);
+  --color-accent:       #FF8FB1;
+  --color-accent-light: #FFD6E0;
+  --color-success:      #6EE7B7;
+  --color-warning:      #FBBF24;
+  --color-danger:       #F87171;
+  --color-text-primary: #F8F8F8;
+  --color-text-secondary: rgba(248, 248, 248, 0.6);
+  --color-text-muted:   rgba(248, 248, 248, 0.35);
+
+  --font-heading: 'Outfit', 'Poppins', sans-serif;
+  --font-body:    'Inter', sans-serif;
+
+  --radius-card:  1rem;
+  --radius-btn:   0.75rem;
+  --radius-pill:  9999px;
+
+  --transition-default: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring:  0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ================================================================
+   BASE RESET
+   ================================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* ================================================================
+   CUSTOM SCROLLBAR
+   ================================================================ */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 999px;
+  opacity: 0.5;
+}
+::-webkit-scrollbar-thumb:hover {
+  opacity: 1;
+}
+
+/* ================================================================
+   COMPONENT LAYER
+   ================================================================ */
+@layer components {
+
+  /* Cards */
+  .card {
+    @apply rounded-2xl p-5 transition-all duration-200;
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .card-hover:hover {
+    background-color: var(--color-card-hover);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .card-glass {
+    @apply rounded-2xl p-5;
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 77, 141, 0.15);
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 select-none cursor-pointer;
+    border-radius: var(--radius-btn);
+    font-family: var(--font-heading);
+  }
+
+  .btn:disabled {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn px-5 py-3 text-white;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    box-shadow: 0 4px 16px var(--color-primary-glow);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px var(--color-primary-glow);
+    filter: brightness(1.05);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+    filter: brightness(0.95);
+  }
+
+  .btn-ghost {
+    @apply btn px-5 py-3;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-text-primary);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .btn-danger {
+    @apply btn px-5 py-3 text-white;
+    background-color: var(--color-danger);
+    box-shadow: 0 4px 16px rgba(248, 113, 113, 0.3);
+  }
+
+  .btn-sm {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-7 py-4 text-lg;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full rounded-xl px-4 py-3 text-sm font-body transition-all duration-200 outline-none;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+  }
+
+  .input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(255, 77, 141, 0.15);
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Badges / Pills */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+
+  .badge-primary {
+    @apply badge;
+    background: rgba(255, 77, 141, 0.15);
+    color: var(--color-primary);
+    border: 1px solid rgba(255, 77, 141, 0.25);
+  }
+
+  .badge-success {
+    @apply badge;
+    background: rgba(110, 231, 183, 0.15);
+    color: var(--color-success);
+  }
+
+  .badge-warning {
+    @apply badge;
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--color-warning);
+  }
+
+  /* Quick-add chips */
+  .chip {
+    @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold cursor-pointer select-none transition-all duration-200;
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  .chip:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: rgba(255, 77, 141, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .chip:active {
+    transform: scale(0.97);
+  }
+
+  .chip-active {
+    background-color: rgba(255, 77, 141, 0.15);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  /* Section Labels */
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest;
+    color: var(--color-text-muted);
+  }
+
+  /* Divider */
+  .divider {
+    @apply w-full h-px;
+    background: var(--color-border);
+  }
+
+  /* Progress Ring container (SVG sizing helper) */
+  .progress-ring-wrap {
+    @apply relative flex items-center justify-center;
+  }
+
+  /* Glow utilities */
+  .glow-primary {
+    box-shadow: 0 0 20px var(--color-primary-glow);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 20px rgba(110, 231, 183, 0.3);
+  }
+
+  /* Shimmer loading skeleton */
+  .skeleton {
+    @apply rounded-xl;
+    background: linear-gradient(90deg, var(--color-card) 25%, rgba(255,255,255,0.04) 50%, var(--color-card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+  }
+
+  /* Bottom nav safe area */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(18, 18, 18, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* Page content padding for bottom nav */
+  .page-content {
+    @apply pb-24 pt-4 px-4;
+    min-height: 100dvh;
+  }
+}
+
+/* ================================================================
+   UTILITY LAYER
+   ================================================================ */
+@layer utilities {
+  .text-gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  }
+
+  .border-primary-glow {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 12px var(--color-primary-glow);
+  }
+
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  /* Safe area insets */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Text colors */
+  .text-primary-color { color: var(--color-primary); }
+  .text-accent-color  { color: var(--color-accent); }
+  .text-muted         { color: var(--color-text-muted); }
+  .text-secondary-color { color: var(--color-text-secondary); }
+}
+
+@layer base {
+  .theme {
+    --font-heading: var(--font-heading);
+    --font-sans: var(--font-body);
+  }
+  :root {
+    --background: var(--color-bg);
+    --foreground: var(--color-text-primary);
+    --card: var(--color-card);
+    --card-foreground: var(--color-text-primary);
+    --popover: var(--color-card);
+    --popover-foreground: var(--color-text-primary);
+    --primary: var(--color-primary);
+    --primary-foreground: #ffffff;
+    --secondary: rgba(255, 255, 255, 0.05);
+    --secondary-foreground: var(--color-text-primary);
+    --muted: rgba(255, 255, 255, 0.05);
+    --muted-foreground: var(--color-text-secondary);
+    --accent: var(--color-accent);
+    --accent-foreground: #ffffff;
+    --destructive: var(--color-danger);
+    --destructive-foreground: #ffffff;
+    --border: var(--color-border);
+    --input: rgba(255, 255, 255, 0.05);
+    --ring: var(--color-primary);
+    --radius: var(--radius-card);
+    --sidebar: var(--color-card);
+    --sidebar-foreground: var(--color-text-primary);
+    --sidebar-primary: var(--color-primary);
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: var(--color-accent);
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: var(--color-border);
+    --sidebar-ring: var(--color-primary);
+  }
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}

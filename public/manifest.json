@@ -1,0 +1,24 @@
+{
+  "name": "BondXP",
+  "short_name": "BondXP",
+  "description": "A private cozy productivity reward system for couples.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#FF4D8D",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
