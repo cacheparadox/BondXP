@@ -198,3 +198,28 @@ Change the body to:
 </body>
 </html>
 ```
+
+### ✉️ Part C: Setting up a Free Custom SMTP Provider (Resend)
+Since Supabase's default email service has a strict rate limit of **2 emails per hour** for security/anti-abuse reasons, you will get rate-limited instantly while testing.
+
+Setting up a **free Resend account** takes 2 minutes, provides **3,000 free emails per month**, and completely removes all rate limits:
+
+1. **Sign Up on Resend**:
+   * Go to [Resend](https://resend.com) and create a free account.
+2. **Generate API Key**:
+   * Under the **API Keys** tab in Resend, click **Create API Key**.
+   * Give it a name (e.g. `Supabase Auth`) and copy the generated key (starts with `re_...`).
+3. **Configure Supabase SMTP**:
+   * Open your **Supabase Dashboard** -> **Authentication** -> **Providers** -> **SMTP**.
+   * Turn **ON** the toggle for **Enable Custom SMTP**.
+   * Fill out the settings as follows:
+     * **Sender Email**: `onboarding@resend.dev` (or your own verified custom domain email if configured in Resend).
+     * **Sender Name**: `BondXP`
+     * **SMTP Host**: `smtp.resend.com`
+     * **SMTP Port**: `465` (SSL) or `587` (TLS)
+     * **SMTP Username**: `resend` (literally the exact word `resend` in lowercase)
+     * **SMTP Password**: Paste your Resend API Key (`re_...`)
+   * Click **Save**.
+
+Now you will bypass the 2 emails/hour rate limit completely and be able to sign up and log in as much as you need!
+
