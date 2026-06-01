@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
-import { Mail, ArrowRight, Heart } from "lucide-react";
+import { User, ArrowRight, Heart } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
 
@@ -23,19 +23,28 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
   const supabase = createClient();
-  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+  const redirectTo = searchParams.get("redirectTo") || "/pairing";
 
   // Check if user is already logged in
   useEffect(() => {
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push(redirectTo);
+        // Check if they already have a profile + couple session
+        const { data: profile } = await (supabase.from("users") as any)
+          .select("couple_session_id, display_name")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profile?.couple_session_id) {
+          router.push("/dashboard");
+        } else if (profile?.display_name) {
+          router.push("/pairing");
+        }
       }
     }
     checkSession();
@@ -43,25 +52,50 @@ function LoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast.error("Please enter your email");
+    const trimmed = username.trim();
+    if (!trimmed) {
+      toast.error("Please enter a username");
+      return;
+    }
+    if (trimmed.length < 2) {
+      toast.error("Username must be at least 2 characters");
       return;
     }
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/api/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
-        },
-      });
+      // Sign in anonymously — no email needed
+      const { data, error } = await supabase.auth.signInAnonymously();
 
       if (error) {
         toast.error(error.message);
+        return;
+      }
+
+      const userId = data.user?.id;
+      if (!userId) throw new Error("No user ID returned");
+
+      // Check if this anonymous user already has a profile (shouldn't on fresh login, but just in case)
+      const { data: existing } = await (supabase.from("users") as any)
+        .select("id, couple_session_id")
+        .eq("id", userId)
+        .single();
+
+      if (!existing) {
+        // Pre-create the user row with the display_name so pairing page can read it
+        await (supabase.from("users") as any).insert({
+          id: userId,
+          display_name: trimmed,
+          role: "task_user", // default; user can change on pairing page
+        });
+      }
+
+      toast.success(`Welcome, ${trimmed}! 💕`);
+
+      if (existing?.couple_session_id) {
+        router.push("/dashboard");
       } else {
-        setSent(true);
-        toast.success("Magic link sent! Check your email inbox.");
+        router.push(redirectTo);
       }
     } catch (err: any) {
       toast.error("Something went wrong. Please try again.");
@@ -102,67 +136,50 @@ function LoginForm() {
           A cozy, relationship-powered productivity reward system for couples.
         </p>
 
-        {/* Auth Forms */}
+        {/* Auth Form */}
         <div className="w-full mt-8">
-          {!sent ? (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-heading font-semibold uppercase tracking-wider text-white/60">
-                  Email Address
-                </label>
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-4 w-4 h-4 text-white/40" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address..."
-                    disabled={loading}
-                    className="input pl-11 text-white bg-white/[0.03] border-white/[0.08] focus:border-primary"
-                    required
-                  />
-                </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-heading font-semibold uppercase tracking-wider text-white/60">
+                Your Username
+              </label>
+              <div className="relative flex items-center">
+                <User className="absolute left-4 w-4 h-4 text-white/40" />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter a nickname or first name..."
+                  disabled={loading}
+                  maxLength={32}
+                  className="input pl-11 text-white bg-white/[0.03] border-white/[0.08] focus:border-primary"
+                  required
+                  autoComplete="off"
+                />
               </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 cursor-pointer font-bold text-sm tracking-wide"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <Heart className="w-4 h-4 animate-ping text-white" />
-                    Sending link...
-                  </span>
-                ) : (
-                  <>
-                    Send Magic Link
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-4 flex flex-col items-center gap-3"
-            >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 text-primary">
-                <Heart className="w-6 h-6 fill-primary/10 animate-bounce" />
-              </div>
-              <h2 className="text-lg font-heading font-bold text-white">Check your email!</h2>
-              <p className="text-xs font-body text-white/60 max-w-[260px] leading-relaxed">
-                We sent a secure magic sign-in link to <strong className="text-white">{email}</strong>. Click it to log in.
+              <p className="text-[10px] text-white/30 font-body pl-1">
+                No email or password needed — just pick a name 💕
               </p>
-              <button
-                onClick={() => setSent(false)}
-                className="text-xs text-primary font-heading font-medium hover:underline mt-4 cursor-pointer"
-              >
-                ← Try a different email
-              </button>
-            </motion.div>
-          )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 cursor-pointer font-bold text-sm tracking-wide"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Heart className="w-4 h-4 animate-ping text-white" />
+                  Entering...
+                </span>
+              ) : (
+                <>
+                  Enter BondXP
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
         </div>
       </motion.div>
     </main>

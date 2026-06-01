@@ -1,6 +1,10 @@
 -- ============================================================
 -- BondXP — Supabase Schema
--- Run this in your Supabase SQL Editor (hoqarmpzwdpldqxhidbd)
+-- Run this in your Supabase SQL Editor
+-- ============================================================
+-- IMPORTANT: Enable Anonymous Sign-ins in Supabase Dashboard:
+--   Authentication → Providers → Anonymous → Enable
+-- Users log in with just a username (no email required).
 -- ============================================================
 
 -- Enable UUID extension
@@ -20,14 +24,14 @@ CREATE TABLE couple_sessions (
 -- ============================================================
 CREATE TABLE users (
   id                UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email             TEXT,
-  display_name      TEXT,
-  role              TEXT CHECK (role IN ('task_user', 'reward_giver')) NOT NULL,
+  email             TEXT,                          -- NULL for anonymous users
+  display_name      TEXT NOT NULL,                 -- username chosen at login
+  role              TEXT CHECK (role IN ('task_user', 'reward_giver')) DEFAULT 'task_user',
   couple_session_id UUID REFERENCES couple_sessions(id),
   avatar_url        TEXT,
   timezone          TEXT DEFAULT 'UTC',
-  ntfy_topic        TEXT,                        -- NTFY push topic (optional)
-  theme_config      JSONB DEFAULT '{}',           -- color/font customization
+  ntfy_topic        TEXT,                          -- NTFY push topic (optional)
+  theme_config      JSONB DEFAULT '{}',             -- color/font customization
   created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 

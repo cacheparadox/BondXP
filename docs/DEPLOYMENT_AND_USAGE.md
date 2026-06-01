@@ -140,29 +140,39 @@ By default, Supabase sends confirmation links pointing to your local environment
 Copy and paste these stylized HTML templates into your **Supabase Dashboard** -> **Authentication** -> **Email Templates**:
 
 #### 1. Signup / Confirmation Template
-Change the body to:
+* **Subject**: `💖 Welcome to BondXP — Confirm Your Email`
+* **Body**:
 ```html
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Your Email</title>
   <style>
-    body { background-color: #121212; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; color: #ffffff; }
-    .wrapper { padding: 45px 20px; text-align: center; background-color: #121212; }
-    .container { max-width: 420px; margin: 0 auto; background-color: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 35px 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-    .heart { font-size: 44px; margin: 0 0 15px 0; }
-    h2 { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; letter-spacing: -0.5px; }
-    p { font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, 0.6); margin: 0 0 25px 0; }
-    .btn { display: inline-block; background-color: #ff4d8d; color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; padding: 12px 28px; border-radius: 14px; box-shadow: 0 4px 15px rgba(255, 77, 141, 0.3); }
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&family=Quicksand:wght@500;700&display=swap');
+    body { background-color: #0c0a09; font-family: 'Quicksand', -apple-system, sans-serif; margin: 0; padding: 0; color: #f5f5f4; -webkit-font-smoothing: antialiased; }
+    .wrapper { padding: 50px 20px; text-align: center; background-color: #0c0a09; }
+    .container { max-width: 440px; margin: 0 auto; background: linear-gradient(180deg, #1c1917 0%, #171513 100%); border: 1px solid rgba(255, 77, 141, 0.15); border-radius: 28px; padding: 45px 35px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 50px rgba(255, 77, 141, 0.05); }
+    .heart { font-size: 54px; margin: 0 0 20px 0; line-height: 1; display: inline-block; }
+    h1 { font-family: 'Outfit', -apple-system, sans-serif; font-size: 26px; font-weight: 900; color: #ffffff; margin: 0 0 12px 0; letter-spacing: -0.5px; }
+    p { font-size: 14px; line-height: 1.6; color: #a8a29e; margin: 0 0 32px 0; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #ff4d8d 0%, #e11d48 100%); color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 700; padding: 14px 36px; border-radius: 16px; box-shadow: 0 6px 20px rgba(255, 77, 141, 0.35); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .footer { font-size: 11px; color: #57534e; margin-top: 35px; line-height: 1.5; }
+    .accent { color: #ff4d8d; font-weight: 700; }
   </style>
 </head>
 <body>
   <div class="wrapper">
     <div class="container">
       <div class="heart">💖</div>
-      <h2>Confirm your email address</h2>
-      <p>Follow the link below to confirm this email address and finish signing up.</p>
-      <a href="{{ .ConfirmationURL }}" class="btn">Confirm email address</a>
+      <h1>Welcome to BondXP</h1>
+      <p>Your private relationship productivity space is ready. Confirm your email address below to pair up and start earning rewards together!</p>
+      <a href="{{ .ConfirmationURL }}" class="btn">Confirm Email Address</a>
+      <div class="footer">
+        If you didn't request this email, you can safely ignore it.<br>
+        Powered by <span class="accent">BondXP</span>.
+      </div>
     </div>
   </div>
 </body>
@@ -170,20 +180,26 @@ Change the body to:
 ```
 
 #### 2. Magic Link Template
-Change the body to:
+* **Subject**: `✨ Log In to BondXP`
+* **Body**:
 ```html
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In to BondXP</title>
   <style>
-    body { background-color: #121212; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; color: #ffffff; }
-    .wrapper { padding: 45px 20px; text-align: center; background-color: #121212; }
-    .container { max-width: 420px; margin: 0 auto; background-color: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 35px 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-    .spark { font-size: 44px; margin: 0 0 15px 0; }
-    h1 { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; letter-spacing: -0.5px; }
-    p { font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, 0.6); margin: 0 0 25px 0; }
-    .btn { display: inline-block; background-color: #ff4d8d; color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; padding: 12px 28px; border-radius: 14px; box-shadow: 0 4px 15px rgba(255, 77, 141, 0.3); }
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&family=Quicksand:wght@500;700&display=swap');
+    body { background-color: #0c0a09; font-family: 'Quicksand', -apple-system, sans-serif; margin: 0; padding: 0; color: #f5f5f4; -webkit-font-smoothing: antialiased; }
+    .wrapper { padding: 50px 20px; text-align: center; background-color: #0c0a09; }
+    .container { max-width: 440px; margin: 0 auto; background: linear-gradient(180deg, #1c1917 0%, #171513 100%); border: 1px solid rgba(255, 77, 141, 0.15); border-radius: 28px; padding: 45px 35px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 50px rgba(255, 77, 141, 0.05); }
+    .spark { font-size: 54px; margin: 0 0 20px 0; line-height: 1; display: inline-block; }
+    h1 { font-family: 'Outfit', -apple-system, sans-serif; font-size: 26px; font-weight: 900; color: #ffffff; margin: 0 0 12px 0; letter-spacing: -0.5px; }
+    p { font-size: 14px; line-height: 1.6; color: #a8a29e; margin: 0 0 32px 0; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #ff4d8d 0%, #e11d48 100%); color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 700; padding: 14px 36px; border-radius: 16px; box-shadow: 0 6px 20px rgba(255, 77, 141, 0.35); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .footer { font-size: 11px; color: #57534e; margin-top: 35px; line-height: 1.5; }
+    .accent { color: #ff4d8d; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -191,8 +207,12 @@ Change the body to:
     <div class="container">
       <div class="spark">✨</div>
       <h1>Log In to BondXP</h1>
-      <p>Open the button below to log back into your private space instantly.</p>
-      <a href="{{ .ConfirmationURL }}" class="btn">Log In</a>
+      <p>Tap the button below to sign in instantly and enter your shared workspace.</p>
+      <a href="{{ .ConfirmationURL }}" class="btn">Log In Instantly</a>
+      <div class="footer">
+        If you didn't request this link, you can safely ignore it.<br>
+        Powered by <span class="accent">BondXP</span>.
+      </div>
     </div>
   </div>
 </body>
@@ -230,3 +250,104 @@ Now you will bypass the 2 emails/hour rate limit completely and be able to sign 
 > *Bonus: Since you are using custom SMTP, the default mailer's strict anti-phishing keyword filters are bypassed. If you want, you can now customize the wording or styles even further without getting blocked!*
 
 
+
+### ✉️ Email Subjects for Magic Link Templates
+
+- **Login / Magic Link**: "Your BondXP magic link – instant access"
+- **Signup Confirmation**: "Welcome to BondXP – confirm your email"
+- **Password Reset**: "BondXP password reset request"
+- **Verification Code**: "Your BondXP verification code"
+
+You can customize these subjects in the **Supabase Dashboard → Authentication → Email Templates** under the *Subject* field for each email type.
+
+
+### 📧 Testing Email Templates
+
+You can preview and test your email templates directly from the Supabase dashboard:
+
+1. Navigate to **Authentication → Email Templates**.
+2. Click **Preview** next to the template you want to test.
+3. Use the **Send Test Email** button to send a real email to your address (ensure your Resend SMTP config is active).
+4. Verify that the **Subject**, **Body**, and **Magic Link** render correctly on both desktop and mobile devices.
+5. If you need to adjust styles, edit the HTML/CSS above and click **Save**. The preview updates instantly.
+
+> **Tip**: Enable the **Show HTML source** toggle in the preview modal to inspect the compiled template and ensure placeholders like `{{ .ConfirmationURL }}` are correctly replaced.
+
+## ⚠️ Debugging OTP / Magic Link Issues
+
+If the **OTP** (magic‑link) provider does not appear in the Supabase Dashboard, or OTP requests return a `500` error after switching to Resend, follow these steps:
+
+1. **Enable the OTP provider**
+   - In the Supabase Dashboard go to **Authentication → Providers**.
+   - Locate **OTP** (or **Email OTP / Magic Link**) and toggle it **ON**. If the toggle is missing, make sure your project is using **Auth v2** (Settings → General → Auth version). Upgrade if necessary.
+2. **Add the redirect URL**
+   - Under **Authentication → Settings → Redirect URLs**, add the exact callback you use:
+     ```
+     https://bond-xp.vercel.app/api/auth/callback?redirectTo=%2Fdashboard
+     ```
+   - Save the changes.
+3. **Verify environment variables**
+   - `NEXT_PUBLIC_SUPABASE_URL` → `https://hoqarmpzwdpldqxhidbd.supabase.co`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` → your *anon* key (never use the service‑role key on the client).
+4. **Check the request headers**
+   - The OTP endpoint requires the `apikey` header (or `Authorization: Bearer …`). A missing key results in a 500.
+   - Example request (Node/TS):
+     ```ts
+     await fetch(`${SUPABASE_URL}/auth/v1/otp?redirect_to=${encodeURIComponent(REDIRECT)}`, {
+       method: "POST",
+       headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+       body: JSON.stringify({ email: "you@example.com" })
+     });
+     ```
+5. **Resend SMTP does not affect OTP generation**
+   - OTP tokens are generated by Supabase; Resend only handles the email delivery. Ensure **Enable Custom SMTP** is on and the Resend credentials are valid.
+6. **Inspect Supabase logs**
+   - Open **Project → Logs → Auth** in the dashboard. Look for any error messages when you trigger an OTP request – they often point to missing keys or mis‑configured redirects.
+7. **Test directly from the dashboard**
+   - Use the **Send Test Email** button on the **Email Templates** page for the *Magic Link* template. If the test email succeeds, the OTP flow is correctly configured.
+
+After completing these steps, the OTP endpoint should return a `200` response and emails will be sent via Resend.
+
+### 🔧 Resend SMTP Troubleshooting
+
+If the OTP request succeeds on Supabase but the email never arrives (or you get "Error sending confirmation email"), the problem is almost always in the **Resend SMTP** configuration. Follow these steps:
+
+1. **Verify the Resend API key**
+   - In the Resend Dashboard go to **API Keys** and copy the latest **publishable** key (it starts with `re_`).
+   - Ensure the same key is set in Supabase → **Authentication → SMTP → SMTP Password**.
+2. **Confirm the sender email / domain**
+   - Resend only allows sending from **verified domains**. The address you put in **Sender Email** (e.g. `onboarding@resend.dev` or `noreply@yourdomain.com`) must be listed under **Domains** → **Verified**.
+   - If you use a custom domain, add the required DNS TXT/SPF records as described by Resend and wait for verification.
+3. **Check the SMTP credentials**
+   - **SMTP Host**: `smtp.resend.com`
+   - **SMTP Port**: `465` (SSL) **or** `587` (TLS)
+   - **SMTP Username**: exactly `resend` (lower‑case, no extra spaces)
+   - **SMTP Password**: the **full** API key (`re_...`).
+   - Any typo in these fields will cause Supabase to fail when trying to forward the email, producing the 500 error you saw.
+4. **Test the email outside Supabase**
+   - Use a simple Node script to send a test email via Resend’s SMTP – this isolates the provider from Supabase:
+   ```ts
+   import nodemailer from "nodemailer";
+
+   const transporter = nodemailer.createTransport({
+     host: "smtp.resend.com",
+     port: 587,
+     secure: false, // true for 465
+     auth: { user: "resend", pass: "re_YOUR_API_KEY" }
+   });
+
+   await transporter.sendMail({
+     from: "onboarding@resend.dev",
+     to: "you@example.com",
+     subject: "Resend test",
+     text: "If you see this, SMTP works!"
+   });
+   console.log("Test email sent");
+   ```
+   - If this script fails, the issue is with the Resend credentials or domain verification.
+5. **Inspect Supabase logs for the exact error**
+   - In the Supabase Dashboard go to **Project → Logs → Auth** and look for the latest entry with `"Error sending confirmation email"`. It often includes a **SMTP response code** (e.g., `550 5.1.1` for invalid sender). Use that to adjust your Resend settings.
+6. **Temporary fallback**
+   - To confirm that the OTP flow itself works, disable **Custom SMTP** (toggle off) and let Supabase use its built‑in email service. The OTP request should now return a 200 and you’ll receive the email via Supabase’s default sender. If that succeeds, the OTP logic is fine and the problem resides solely in Resend.
+
+After verifying the above, retry the OTP request. When the SMTP connection is correct, Supabase will return a `200` and you’ll receive the magic‑link email via Resend.

@@ -25,6 +25,14 @@ export default function PairingPage() {
   const [createdCode, setCreatedCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [appUrl, setAppUrl] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setAppUrl(window.location.origin);
+    }
+  }, []);
 
   useEffect(() => {
     async function checkUser() {
@@ -35,7 +43,7 @@ export default function PairingPage() {
       }
       setUser(user);
 
-      // Check if user already has a profile
+      // Check if user already has a profile row (created during login)
       const { data: profileData } = await (supabase
         .from("users") as any)
         .select("*")
@@ -44,13 +52,30 @@ export default function PairingPage() {
 
       const profile = profileData as any;
 
-      if (profile && profile.couple_session_id) {
+      // Extract invite code if passed in URL
+      const params = new URLSearchParams(window.location.search);
+      const codeParam = params.get("code");
+      if (codeParam) {
+        setEnteredCode(codeParam.toUpperCase());
+      }
+
+      if (profile?.couple_session_id) {
         router.push("/dashboard");
-      } else if (profile) {
-        // User has a profile but no couple session yet
-        setDisplayName(profile.display_name || "");
-        setRole(profile.role);
-        setStep("session_choice");
+        return;
+      }
+
+      if (profile?.display_name) {
+        // Username was set at login — skip straight to session choice
+        setDisplayName(profile.display_name);
+        setRole(profile.role || "task_user");
+        if (codeParam) {
+          setStep("join_input");
+        } else {
+          setStep("session_choice");
+        }
+      } else {
+        // Fallback: show profile step so they can set a name
+        setStep("profile");
       }
     }
     checkUser();
@@ -62,8 +87,15 @@ export default function PairingPage() {
       toast.error("Please enter a display name");
       return;
     }
-    setStep("session_choice");
+    
+    // If there is an invite code in state, skip session choice and go to join input
+    if (enteredCode) {
+      setStep("join_input");
+    } else {
+      setStep("session_choice");
+    }
   };
+
 
   const handleCreateSession = async () => {
     setLoading(true);
@@ -82,7 +114,6 @@ export default function PairingPage() {
         .from("users") as any)
         .upsert({
           id: user.id,
-          email: user.email,
           display_name: displayName.trim(),
           role: role,
           couple_session_id: sessionData.id,
@@ -159,7 +190,6 @@ export default function PairingPage() {
         .from("users") as any)
         .upsert({
           id: user.id,
-          email: user.email,
           display_name: displayName.trim(),
           role: role,
           couple_session_id: session.id,
@@ -182,6 +212,13 @@ export default function PairingPage() {
     setCopied(true);
     toast.success("Code copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyShareLink = () => {
+    navigator.clipboard.writeText(`${appUrl}/pairing?code=${createdCode}`);
+    setShareCopied(true);
+    toast.success("Pairing link copied to clipboard!");
+    setTimeout(() => setShareCopied(false), 2000);
   };
 
   const handleLogout = async () => {
@@ -365,7 +402,7 @@ export default function PairingPage() {
               </span>
               <button
                 onClick={copyToClipboard}
-                className="btn-ghost px-4 py-2.5 flex items-center gap-1.5 text-xs text-white/80"
+                className="btn-ghost px-4 py-2.5 flex items-center gap-1.5 text-xs text-white/80 cursor-pointer"
               >
                 {copied ? (
                   <>
@@ -375,10 +412,44 @@ export default function PairingPage() {
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" />
-                    Copy
+                    Copy Code
                   </>
                 )}
               </button>
+            </div>
+
+            {/* Premium Share Options */}
+            <div className="w-full mt-3 flex flex-col gap-2">
+              <button
+                onClick={copyShareLink}
+                className="w-full btn-ghost py-3 flex items-center justify-center gap-2 text-xs font-semibold text-white/80 cursor-pointer"
+              >
+                {shareCopied ? (
+                  <>
+                    <Check className="w-4 h-4 text-green-400" />
+                    Link Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    Copy Pairing Link
+                  </>
+                )}
+              </button>
+              
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                  `Join my private BondXP space! ❤️\n\nClick here to pair with me instantly:\n${appUrl}/pairing?code=${createdCode}\n\n(Or enter invite code: ${createdCode})`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-[#25D366] hover:bg-[#20ba5a] text-black font-heading font-bold text-xs rounded-xl py-3 flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer no-underline"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.864.002-2.637-1.03-5.114-2.905-6.989-1.873-1.873-4.354-2.904-6.993-2.906-5.44 0-9.867 4.42-9.871 9.863 0 1.764.462 3.486 1.341 5.021l-.97 3.548 3.634-.954zm10.985-7.353c-.304-.153-1.8-.886-2.077-.988-.278-.102-.48-.153-.68.153-.2.304-.778.988-.953 1.19-.177.2-.353.228-.657.076-.304-.153-1.285-.473-2.448-1.51-1.01-.902-1.604-2.016-1.802-2.355-.198-.34-.02-.523.15-.693.153-.153.304-.353.457-.529.153-.177.203-.304.304-.508.102-.2.05-.381-.026-.533-.076-.153-.68-1.637-.932-2.247-.246-.593-.496-.51-.68-.52-.177-.01-.38-.01-.58-.01-.2 0-.529.076-.807.38-.278.304-1.062 1.039-1.062 2.535 0 1.497 1.088 2.943 1.24 3.146.153.2 2.142 3.272 5.19 4.587.724.312 1.29.499 1.73.639.728.23 1.39.196 1.91.119.58-.087 1.8-.737 2.053-1.448.253-.71.253-1.32.177-1.448-.076-.127-.278-.203-.581-.355z"/>
+                </svg>
+                Share via WhatsApp
+              </a>
             </div>
 
             <button
