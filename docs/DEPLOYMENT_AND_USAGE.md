@@ -123,3 +123,88 @@ To enable instant push notifications without dealing with browser service worker
 3. In the **Push Notifications (NTFY)** card, enter a unique, private topic name (e.g. `bondxp-ourspace-84931`). Click **Save**.
 4. In the mobile NTFY app, tap **Subscribe to topic** and enter that exact topic name.
 5. You'll now receive instant notifications on your phone whenever your partner logs a task, requests a wish, or claims a milestone!
+
+---
+
+## 📧 6. Customizing Supabase Email Templates & Redirect URLs
+
+To fix bleak emails and avoid being redirected to `localhost:3000` instead of your live Vercel app:
+
+### 🔗 Part A: Fixing Redirect URLs
+By default, Supabase sends confirmation links pointing to your local environment. To update this:
+1. Go to the **Supabase Dashboard** -> **Authentication** -> **Redirect URLs** (under URL Configuration).
+2. Change the **Site URL** field from `http://localhost:3000` to your live app URL: `https://bond-xp.vercel.app`.
+3. In the **Redirect URLs** list below it, add `http://localhost:3000/**` so that you can still log in locally during testing.
+
+### 🎨 Part B: Beautifying Email Templates
+Copy and paste these stylized HTML templates into your **Supabase Dashboard** -> **Authentication** -> **Email Templates**:
+
+#### 1. Signup / Confirmation Template
+Change the body to:
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { background-color: #121212; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; color: #ffffff; }
+    .wrapper { padding: 40px 20px; text-align: center; background-color: #121212; }
+    .container { max-width: 480px; margin: 0 auto; background-color: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 40px 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+    .heart { font-size: 48px; margin: 0 0 20px 0; }
+    h1 { font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; }
+    p { font-size: 14px; line-height: 1.6; color: rgba(255, 255, 255, 0.6); margin: 0 0 30px 0; }
+    .btn { display: inline-block; background-color: #ff4d8d; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 750; padding: 14px 32px; border-radius: 16px; box-shadow: 0 4px 15px rgba(255, 77, 141, 0.3); }
+    .footer { font-size: 11px; color: rgba(255, 255, 255, 0.3); margin-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="heart">💖</div>
+      <h1>Confirm Your Space</h1>
+      <p>Your private, relationship-powered productivity reward space is ready. Click below to verify your email and enter the space.</p>
+      <a href="{{ .ConfirmationURL }}" class="btn">Enter BondXP</a>
+      <div class="footer">
+        You are receiving this email to join your partner on BondXP.<br>
+        If you didn't request this, you can safely ignore this email.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+```
+
+#### 2. Magic Link Template
+Change the body to:
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { background-color: #121212; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; color: #ffffff; }
+    .wrapper { padding: 40px 20px; text-align: center; background-color: #121212; }
+    .container { max-width: 480px; margin: 0 auto; background-color: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 40px 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+    .spark { font-size: 48px; margin: 0 0 20px 0; }
+    h1 { font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; }
+    p { font-size: 14px; line-height: 1.6; color: rgba(255, 255, 255, 0.6); margin: 0 0 30px 0; }
+    .btn { display: inline-block; background-color: #ff4d8d; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 750; padding: 14px 32px; border-radius: 16px; box-shadow: 0 4px 15px rgba(255, 77, 141, 0.3); }
+    .footer { font-size: 11px; color: rgba(255, 255, 255, 0.3); margin-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="spark">✨</div>
+      <h1>Log In to BondXP</h1>
+      <p>Tap the button below to log back into your private space instantly.</p>
+      <a href="{{ .ConfirmationURL }}" class="btn">Log In</a>
+      <div class="footer">
+        Requested for your account.<br>
+        If you didn't request this, you can safely ignore this email.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+```
