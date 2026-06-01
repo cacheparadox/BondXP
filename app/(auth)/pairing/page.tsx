@@ -65,14 +65,10 @@ export default function PairingPage() {
       }
 
       if (profile?.display_name) {
-        // Username was set at login — skip straight to session choice
+        // Username was set at login — prefill but show profile step to allow role selection
         setDisplayName(profile.display_name);
         setRole(profile.role || "task_user");
-        if (codeParam) {
-          setStep("join_input");
-        } else {
-          setStep("session_choice");
-        }
+        setStep("profile");
       } else {
         // Fallback: show profile step so they can set a name
         setStep("profile");

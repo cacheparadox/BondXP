@@ -34,6 +34,11 @@ export default function SettingsPage() {
 
   const [saving, setSaving] = useState(false);
 
+  // Import Rewards states
+  const [jsonInput, setJsonInput] = useState("");
+  const [overwrite, setOverwrite] = useState(false);
+  const [importing, setImporting] = useState(false);
+
   const loadSettingsData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -162,6 +167,71 @@ export default function SettingsPage() {
     setFontHeading("Outfit");
     setFontBody("Inter");
     toast.info("Theme reset to defaults. Remember to click save!");
+  };
+
+  const handleImportRewards = async () => {
+    if (!jsonInput.trim()) {
+      toast.error("Please enter a JSON string");
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const parsed = JSON.parse(jsonInput.trim());
+      if (!Array.isArray(parsed)) {
+        throw new Error("JSON must be a list of rewards (an array)");
+      }
+
+      const validated = parsed.map((item: any, index: number) => {
+        if (!item.title || !item.title.trim()) {
+          throw new Error(`Reward at index ${index} is missing a title`);
+        }
+        if (!item.category) {
+          throw new Error(`Reward "${item.title}" is missing a category`);
+        }
+        if (typeof item.cost !== "number" || item.cost < 0) {
+          throw new Error(`Reward "${item.title}" cost must be a non-negative number`);
+        }
+        
+        return {
+          couple_session_id: profile?.couple_session_id,
+          title: item.title.trim(),
+          description: item.description || "",
+          category: item.category,
+          cost: item.cost,
+          reward_type: item.reward_type || "redemption",
+          icon: item.icon || "🎁",
+          cooldown_hours: item.cooldown_hours || 0,
+          active: item.active !== undefined ? item.active : true,
+          hidden: item.hidden !== undefined ? item.hidden : false,
+          sort_order: item.sort_order || index,
+          created_by: profile?.id,
+        };
+      });
+
+      if (overwrite) {
+        const { error: deleteError } = await (supabase
+          .from("rewards") as any)
+          .delete()
+          .eq("couple_session_id", profile?.couple_session_id);
+        
+        if (deleteError) throw deleteError;
+      }
+
+      const { error: insertError } = await (supabase
+        .from("rewards") as any)
+        .insert(validated);
+
+      if (insertError) throw insertError;
+
+      toast.success(`Successfully imported ${validated.length} rewards! 🎉`);
+      setJsonInput("");
+    } catch (err: any) {
+      toast.error(err.message || "Invalid JSON format");
+      console.error(err);
+    } finally {
+      setImporting(false);
+    }
   };
 
   if (loading) {
@@ -383,6 +453,52 @@ export default function SettingsPage() {
               {saving ? "Saving Configurations..." : "Save Settings & Theme"}
             </button>
           </form>
+
+          {/* Section: Import Rewards JSON (Only for Reward Giver) */}
+          {profile?.role === "reward_giver" && (
+            <div className="card bg-white/[0.02] border-white/[0.06] p-6 space-y-4 mt-6">
+              <h3 className="text-xs font-heading font-bold uppercase tracking-wider text-white/70 flex items-center gap-1.5 border-b border-white/[0.04] pb-2">
+                <Palette className="w-4 h-4 text-primary" />
+                Import Custom Rewards (JSON)
+              </h3>
+              
+              <div className="space-y-3">
+                <p className="text-[10px] text-white/50 leading-relaxed font-body">
+                  Paste a JSON array of your custom rewards to populate your partner's store.
+                </p>
+
+                <textarea
+                  value={jsonInput}
+                  onChange={(e) => setJsonInput(e.target.value)}
+                  placeholder={`[\n  {\n    "title": "Breakfast in bed",\n    "description": "Any basic breakfast cooked and delivered",\n    "category": "Acts of Service",\n    "cost": 15,\n    "icon": "🍳",\n    "cooldown_hours": 24,\n    "reward_type": "redemption"\n  }\n]`}
+                  className="w-full h-32 rounded-xl p-3 text-xs font-mono bg-black/40 border border-white/[0.08] outline-none focus:border-primary text-white resize-none"
+                />
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="overwriteRewards"
+                    checked={overwrite}
+                    onChange={(e) => setOverwrite(e.target.checked)}
+                    className="rounded border-white/[0.08] bg-white/[0.02] text-primary focus:ring-primary w-3.5 h-3.5"
+                  />
+                  <label htmlFor="overwriteRewards" className="text-[10px] font-heading font-semibold text-white/60 select-none cursor-pointer">
+                    Clear existing rewards in this space before importing
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleImportRewards}
+                  disabled={importing}
+                  className="w-full btn-primary py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  {importing ? "Importing..." : "Import Rewards"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN: Achievement Badge Collection */}
