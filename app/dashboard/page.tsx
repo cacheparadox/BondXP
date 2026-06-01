@@ -30,7 +30,7 @@ export default function DashboardPage() {
         .eq("id", user.id)
         .single();
 
-      if (error || !profile) {
+      if (error || !profile || !profile.couple_session_id) {
         // Not paired or no profile -> send to pairing
         router.push("/pairing");
         return;

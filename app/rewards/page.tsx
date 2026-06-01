@@ -27,11 +27,11 @@ export default function RewardsPage() {
       // Query profile
       const { data: profile, error } = await (supabase
         .from("users") as any)
-        .select("role")
+        .select("role, couple_session_id")
         .eq("id", user.id)
         .single();
 
-      if (error || !profile) {
+      if (error || !profile || !profile.couple_session_id) {
         router.push("/pairing");
         return;
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +11,7 @@ import { format, subDays, startOfDay, parseISO } from "date-fns";
 import { toast } from "sonner";
 
 export default function AnalyticsPage() {
+  const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
@@ -35,8 +37,8 @@ export default function AnalyticsPage() {
         .eq("id", user.id)
         .single();
 
-      if (!prof) {
-        setLoading(false);
+      if (!prof || !prof.couple_session_id) {
+        router.push("/pairing");
         return;
       }
       setProfile(prof);

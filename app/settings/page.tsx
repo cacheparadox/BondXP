@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import PageHeader from "@/components/layout/PageHeader";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +11,7 @@ import { User, Bell, Palette, Award, Check, Sparkles, AlertCircle, RefreshCw } f
 import { toast } from "sonner";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   
@@ -44,8 +46,8 @@ export default function SettingsPage() {
         .eq("id", user.id)
         .single();
       
-      if (!prof) {
-        setLoading(false);
+      if (!prof || !prof.couple_session_id) {
+        router.push("/pairing");
         return;
       }
       setProfile(prof);
