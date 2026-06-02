@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   // Get user profile
   const { data: profile } = await (supabase
     .from("users") as any)
-    .select("role, couple_session_id")
+    .select("role, couple_session_id, display_name")
     .eq("id", user.id)
     .single();
 
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
         supabase,
         user.id,
         "New Wish Request! 💖",
-        `${profile.display_name} wants to redeem: ${reward.icon || "🎁"} ${reward.title} (Cost: ${reward.cost} XP)`,
+        `${profile.display_name}: wants to redeem ${reward.icon || "🎁"} "${reward.title}" (Cost: ${reward.cost} XP)`,
         "gift,love_letter"
       );
 
@@ -177,7 +177,7 @@ export async function PUT(request: Request) {
   // Get user profile
   const { data: profile } = await (supabase
     .from("users") as any)
-    .select("role, couple_session_id")
+    .select("role, couple_session_id, display_name")
     .eq("id", user.id)
     .single();
 
@@ -288,11 +288,14 @@ export async function PUT(request: Request) {
       ntfyTags = "broken_heart";
     }
 
+    const actionWord = status === "approved" ? "approved" : status === "scheduled" ? "scheduled" : "declined";
+    const ntfyBodyText = `${(profile as any).display_name}: ${actionWord} wish for "${redemption.reward?.title}". Message: ${notes || "None"}`;
+
     await sendNtfyToUser(
       supabase,
       redemption.user_id,
       ntfyTitle,
-      bodyText,
+      ntfyBodyText,
       ntfyTags
     );
 

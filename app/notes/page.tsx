@@ -243,9 +243,10 @@ export default function NotesPage() {
       if (partner && partner.ntfy_topic) {
         const topic = partner.ntfy_topic.trim();
         if (topic) {
+          const displayName = profile?.display_name || "Partner";
           const bodyText = content.trim()
-            ? (content.trim().length > 120 ? content.trim().slice(0, 120) + "..." : content.trim())
-            : "You got a new memory in your Cute Corner!";
+            ? `${displayName}: ${content.trim().length > 100 ? content.trim().slice(0, 100) + "..." : content.trim()}`
+            : `${displayName}: shared a new memory!`;
           fetch(`https://ntfy.sh/${topic}`, {
             method: "POST",
             headers: {

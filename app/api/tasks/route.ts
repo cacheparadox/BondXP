@@ -84,7 +84,7 @@ export async function POST(request: Request) {
   // Check role
   const { data: profile } = await (supabase
     .from("users") as any)
-    .select("role, couple_session_id")
+    .select("role, couple_session_id, display_name")
     .eq("id", user.id)
     .single();
 
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
       supabase,
       user.id,
       "Task Completed! ✅",
-      `${profile.display_name} completed: "${title.trim()}" (${taskValue} standard task XP)`,
+      `${profile.display_name}: completed "${title.trim()}" (${taskValue} standard task XP)`,
       "ballot_box_with_check,sparkles"
     );
 
@@ -172,7 +172,7 @@ export async function POST(request: Request) {
           supabase,
           user.id,
           "Milestone Unlocked! 🎁",
-          `${profile.display_name} unlocked the Day ${streakResult.milestoneUnlocked.days} milestone: "${streakResult.milestoneUnlocked.title}"!`,
+          `${profile.display_name}: unlocked the Day ${streakResult.milestoneUnlocked.days} milestone: "${streakResult.milestoneUnlocked.title}"!`,
           "tada,fire"
         );
       }
