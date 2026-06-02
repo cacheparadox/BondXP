@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logTaskAndCheckStreak } from "@/lib/streak-engine";
 import { sendNtfyToPartner } from "@/lib/ntfy";
-import { pushEvent } from "@/lib/github";
 
 /**
  * GET /api/tasks
@@ -129,18 +128,6 @@ export async function POST(request: Request) {
       `${profile.display_name}: completed "${title.trim()}" (${taskValue} standard task XP)`,
       "ballot_box_with_check,sparkles"
     );
-
-    // Push event to GitHub
-    await pushEvent("task_completed", {
-      taskId: taskData.id,
-      userId: user.id,
-      displayName: (profile as any).display_name,
-      title: title.trim(),
-      category: category || "Other",
-      value: taskValue,
-      localDate,
-      timestamp: new Date().toISOString(),
-    });
 
     // 3. Create milestone notifications if unlocked
     if (streakResult.milestoneUnlocked) {

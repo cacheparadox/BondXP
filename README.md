@@ -42,7 +42,6 @@ By completing daily routines, the couple builds mutual appreciation, unlocks cus
 ### 🔔 Robust Dual-Channel Notifications
 * **Web Push (VAPID)**: Native browser push alerts for Android, Chrome, and desktop PWA installs.
 * **NTFY Integration**: Instant private pushes with zero vendor lock-in. Features UTF-8 base64 title encoding to ensure emojis display flawlessly without causing server-side fetch exceptions.
-* **GitHub Event Logging**: Dynamically logs system events (task completions, requests, approvals) to a remote GitHub repository's `events/` folder for third-party integrations.
 
 ---
 
@@ -51,7 +50,7 @@ By completing daily routines, the couple builds mutual appreciation, unlocks cus
 * **Frontend**: Next.js 15 (App Router), React, TailwindCSS v3, Framer Motion (Animations), Recharts (Heatmaps & Analytics).
 * **Backend**: Supabase (PostgreSQL, Auth, Row-Level Security, Database Triggers, and Storage Buckets).
 * **PWA & SW**: Service workers optimized for offline caching and installations.
-* **External APIs**: NTFY (Pushes), GitHub REST API (JSON logging).
+* **External APIs**: NTFY (Pushes).
 
 ---
 
@@ -73,10 +72,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
 # Web Push VAPID Keys
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=your-vapid-public-key
 VAPID_PRIVATE_KEY=your-vapid-private-key
-
-# GitHub Push Event Integration (Optional)
-GITHUB_TOKEN=your-personal-access-token-with-repo-scope
-GITHUB_REPO=owner/repo
 ```
 
 ### 3. Installation

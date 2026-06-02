@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { deductFromTaskBank } from "@/lib/reward-engine/task-bank";
 import { differenceInHours } from "date-fns";
 import { sendNtfyToPartner, sendNtfyToUser } from "@/lib/ntfy";
-import { pushEvent } from "@/lib/github";
 
 /**
  * POST /api/redemptions
@@ -140,17 +139,6 @@ export async function POST(request: Request) {
         `${profile.display_name}: wants to redeem ${reward.icon || "🎁"} "${reward.title}" (Cost: ${reward.cost} XP)`,
         "gift,love_letter"
       );
-
-      // Push event to GitHub
-      await pushEvent("redemption_requested", {
-        redemptionId: redemption.id,
-        userId: user.id,
-        displayName: (profile as any).display_name,
-        rewardId: reward.id,
-        rewardTitle: reward.title,
-        rewardCost: reward.cost,
-        timestamp: new Date().toISOString(),
-      });
     }
 
     return NextResponse.json({ success: true, redemption });
@@ -298,17 +286,6 @@ export async function PUT(request: Request) {
       ntfyBodyText,
       ntfyTags
     );
-
-    // Push event to GitHub
-    await pushEvent(`redemption_${status}`, {
-      redemptionId,
-      status,
-      userId: redemption.user_id,
-      partnerId: user.id,
-      rewardTitle: redemption.reward?.title,
-      notes: notes || "",
-      timestamp: new Date().toISOString(),
-    });
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
