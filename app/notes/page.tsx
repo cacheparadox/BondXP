@@ -243,13 +243,16 @@ export default function NotesPage() {
       if (partner && partner.ntfy_topic) {
         const topic = partner.ntfy_topic.trim();
         if (topic) {
+          const bodyText = content.trim()
+            ? (content.trim().length > 120 ? content.trim().slice(0, 120) + "..." : content.trim())
+            : "You got a new memory in your Cute Corner!";
           fetch(`https://ntfy.sh/${topic}`, {
             method: "POST",
             headers: {
-              "Title": "New Memory! 💖",
+              "Title": "New Memory!",
               "Tags": "heart,love_letter",
             },
-            body: "You got a new note in your Cute Corner!",
+            body: bodyText,
           }).catch((err) => console.error("Failed to send client-side NTFY note alert:", err));
         }
       }

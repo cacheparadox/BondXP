@@ -1,6 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 
+function encodeHeaderValue(value: string): string {
+  if (/^[\x00-\x7F]*$/.test(value)) {
+    return value;
+  }
+  const b64 = Buffer.from(value, "utf-8").toString("base64");
+  return `=?utf-8?B?${b64}?=`;
+}
+
 /**
  * Sends a push notification to a specific user's ntfy topic.
  */
@@ -23,14 +31,18 @@ export async function sendNtfyToUser(
     const topic = userProf.ntfy_topic.trim();
     if (!topic) return;
 
-    await fetch(`https://ntfy.sh/${topic}`, {
+    const response = await fetch(`https://ntfy.sh/${topic}`, {
       method: "POST",
       headers: {
-        "Title": title,
+        "Title": encodeHeaderValue(title),
         "Tags": tags,
       },
       body: body,
     });
+    if (!response.ok) {
+      const txt = await response.text();
+      console.error(`Failed NTFY push to user ${topic}: ${response.status} ${response.statusText} - ${txt}`);
+    }
   } catch (err) {
     console.error("Failed to send NTFY notification to user:", err);
   }
@@ -69,14 +81,18 @@ export async function sendNtfyToPartner(
     const topic = partnerProf.ntfy_topic.trim();
     if (!topic) return;
 
-    await fetch(`https://ntfy.sh/${topic}`, {
+    const response = await fetch(`https://ntfy.sh/${topic}`, {
       method: "POST",
       headers: {
-        "Title": title,
+        "Title": encodeHeaderValue(title),
         "Tags": tags,
       },
       body: body,
     });
+    if (!response.ok) {
+      const txt = await response.text();
+      console.error(`Failed NTFY push to partner ${topic}: ${response.status} ${response.statusText} - ${txt}`);
+    }
   } catch (err) {
     console.error("Failed to send NTFY notification to partner:", err);
   }
