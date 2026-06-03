@@ -8,6 +8,36 @@ import { Plus, Edit2, ToggleLeft, ToggleRight, Eye, EyeOff, ArrowUp, ArrowDown, 
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
+function getStreakMilestoneDay(reward: any): number {
+  const STREAK_DAYS_MAP: Record<string, number> = {
+    "short love note": 1,
+    "cuddles": 3,
+    "massage": 5,
+    "sleeping naked": 7,
+    "hj / bj": 10,
+    "crafts / diy": 12,
+    "timestop": 15,
+    "surprise small gift": 18,
+    "free-use session": 20,
+    "special outfit": 25,
+    "extended care session": 30,
+  };
+  
+  const titleKey = (reward.title || "").toLowerCase().trim();
+  if (STREAK_DAYS_MAP[titleKey]) {
+    return STREAK_DAYS_MAP[titleKey];
+  }
+  
+  if (reward.description) {
+    const match = reward.description.match(/Day\s+(\d+)/i);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  
+  return reward.cost || 0;
+}
+
 export default function RewardManager() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
@@ -291,7 +321,7 @@ export default function RewardManager() {
                     </span>
                     <span>•</span>
                     {reward.reward_type === 'streak' ? (
-                      <span>Milestone: <strong>Day {reward.cost}</strong></span>
+                      <span>Milestone: <strong>Day {getStreakMilestoneDay(reward)}</strong></span>
                     ) : (
                       <span>Cost: <strong>{reward.cost} tasks</strong></span>
                     )}

@@ -5,6 +5,40 @@ import { sendNtfyToPartner } from "@/lib/ntfy";
 import { refreshStreakState } from "@/lib/streak-engine";
 
 /**
+ * Resolves the milestone day number from the reward title or description.
+ * Useful when streak rewards are stored with cost = 0.
+ */
+function getStreakMilestoneDay(title: string, description: string, cost: number): number {
+  const STREAK_DAYS_MAP: Record<string, number> = {
+    "short love note": 1,
+    "cuddles": 3,
+    "massage": 5,
+    "sleeping naked": 7,
+    "hj / bj": 10,
+    "crafts / diy": 12,
+    "timestop": 15,
+    "surprise small gift": 18,
+    "free-use session": 20,
+    "special outfit": 25,
+    "extended care session": 30,
+  };
+  
+  const titleKey = (title || "").toLowerCase().trim();
+  if (STREAK_DAYS_MAP[titleKey]) {
+    return STREAK_DAYS_MAP[titleKey];
+  }
+  
+  if (description) {
+    const match = description.match(/Day\s+(\d+)/i);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  
+  return cost || 0;
+}
+
+/**
  * GET /api/streak-claims
  * Checks if the user is eligible to claim a streak reward today and returns any existing claim.
  * Query param: `localDate` (YYYY-MM-DD)
@@ -75,13 +109,16 @@ export async function GET(request: Request) {
     let availableMilestones = [];
     if (dbStreakRewards && dbStreakRewards.length > 0) {
       availableMilestones = dbStreakRewards
-        .map((r: any) => ({
-          days: r.cost, // Use cost as the milestone day
-          title: r.title,
-          icon: r.icon || "🎁",
-          description: r.description || "",
-        }))
-        .filter((m: any) => m.days <= currentStreak)
+        .map((r: any) => {
+          const days = getStreakMilestoneDay(r.title, r.description || "", r.cost);
+          return {
+            days,
+            title: r.title,
+            icon: r.icon || "🎁",
+            description: r.description || "",
+          };
+        })
+        .filter((m: any) => m.days > 0 && m.days <= currentStreak)
         .sort((a: any, b: any) => a.days - b.days);
     } else {
       // Fallback to default presets
@@ -187,10 +224,15 @@ export async function POST(request: Request) {
       .eq("active", true);
 
     if (dbStreakRewards && dbStreakRewards.length > 0) {
-      const dbMilestone = dbStreakRewards.find((r: any) => r.cost === milestoneDays);
+      const dbMilestone = dbStreakRewards.find((r: any) => {
+        const days = getStreakMilestoneDay(r.title, r.description || "", r.cost);
+        return days === milestoneDays;
+      });
+
       if (dbMilestone) {
+        const days = getStreakMilestoneDay(dbMilestone.title, dbMilestone.description || "", dbMilestone.cost);
         milestone = {
-          days: dbMilestone.cost,
+          days,
           title: dbMilestone.title,
           icon: dbMilestone.icon || "🎁",
           description: dbMilestone.description || "",
