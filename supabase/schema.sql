@@ -263,9 +263,10 @@ CREATE POLICY "streaks_couple" ON streaks
     )
   );
 
-CREATE POLICY "streaks_update_couple" ON streaks
+CREATE POLICY "streaks_update_giver" ON streaks
   FOR UPDATE USING (
-    user_id IN (
+    get_my_role() = 'reward_giver'
+    AND user_id IN (
       SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );
@@ -281,10 +282,19 @@ CREATE POLICY "streak_claims_couple_select" ON streak_reward_claims
     )
   );
 
--- Task bank: couple members can read and update
-CREATE POLICY "task_bank_couple_all" ON task_bank
-  FOR ALL USING (
+-- Task bank: couple members can read
+CREATE POLICY "task_bank_select_couple" ON task_bank
+  FOR SELECT USING (
     user_id IN (
+      SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
+    )
+  );
+
+-- Task bank: only reward giver can update balance manually
+CREATE POLICY "task_bank_update_giver" ON task_bank
+  FOR UPDATE USING (
+    get_my_role() = 'reward_giver'
+    AND user_id IN (
       SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
     )
   );

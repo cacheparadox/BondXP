@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logTaskAndCheckStreak } from "@/lib/streak-engine";
 import { sendNtfyToPartner } from "@/lib/ntfy";
@@ -118,7 +118,8 @@ export async function POST(request: Request) {
     if (taskError) throw taskError;
 
     // 2. Process streak validation & task bank logic
-    const streakResult = await logTaskAndCheckStreak(supabase, user.id, localDate, taskValue);
+    const adminSupabase = createAdminClient();
+    const streakResult = await logTaskAndCheckStreak(adminSupabase, user.id, localDate, taskValue);
 
     // Send NTFY Alert to partner
     await sendNtfyToPartner(

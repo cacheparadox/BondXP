@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { deductFromTaskBank } from "@/lib/reward-engine/task-bank";
 import { differenceInHours } from "date-fns";
@@ -86,8 +86,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // 4. Deduct cost from Task Bank
-    const deducted = await deductFromTaskBank(supabase, user.id, reward.cost);
+    // 4. Deduct cost from Task Bank (using admin client to bypass task user RLS update restriction)
+    const adminSupabase = createAdminClient();
+    const deducted = await deductFromTaskBank(adminSupabase, user.id, reward.cost);
     if (!deducted) {
       return NextResponse.json({ error: "Deduction failed. Balance changed." }, { status: 400 });
     }
@@ -237,8 +238,9 @@ export async function PUT(request: Request) {
         .single();
 
       if (bank) {
-        // Subtract from spent_tasks (refunds available tasks!)
-        const { error: refundError } = await (supabase
+        // Subtract from spent_tasks (using admin client to refund task user)
+        const adminSupabase = createAdminClient();
+        const { error: refundError } = await (adminSupabase
           .from("task_bank") as any)
           .update({
             spent_tasks: Math.max(0, bank.spent_tasks - refundCost),
