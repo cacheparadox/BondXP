@@ -263,8 +263,12 @@ CREATE POLICY "streaks_couple" ON streaks
     )
   );
 
-CREATE POLICY "streaks_update_own" ON streaks
-  FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "streaks_update_couple" ON streaks
+  FOR UPDATE USING (
+    user_id IN (
+      SELECT id FROM users WHERE couple_session_id = get_my_couple_session_id()
+    )
+  );
 
 -- Streak reward claims: task user can insert own; couple can view
 CREATE POLICY "streak_claims_own_insert" ON streak_reward_claims
