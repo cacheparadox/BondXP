@@ -205,7 +205,7 @@ export async function POST(request: Request) {
     // 1. Get profile
     const { data: profile } = await (supabase
       .from("users") as any)
-      .select("role, couple_session_id")
+      .select("role, couple_session_id, display_name")
       .eq("id", user.id)
       .single();
 

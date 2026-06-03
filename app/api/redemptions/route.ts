@@ -52,18 +52,21 @@ export async function POST(request: Request) {
     }
 
     // 2. Check task bank balance
+    const isStreak = reward.reward_type === "streak";
+    const costToDeduct = isStreak ? 0 : reward.cost;
+
     const { data: bank } = await (supabase
       .from("task_bank") as any)
       .select("available_tasks")
       .eq("user_id", user.id)
       .single();
 
-    if (!bank || bank.available_tasks < reward.cost) {
+    if (!bank || bank.available_tasks < costToDeduct) {
       return NextResponse.json({ error: "Insufficient task balance" }, { status: 400 });
     }
 
     // 3. Check cooldown hours
-    if (reward.cooldown_hours > 0) {
+    if (reward.cooldown_hours > 0 && !isStreak) {
       // Get the latest approved/pending redemption of this reward
       const { data: lastRedemption } = await (supabase
         .from("redemptions") as any)
@@ -88,7 +91,7 @@ export async function POST(request: Request) {
 
     // 4. Deduct cost from Task Bank (using admin client to bypass task user RLS update restriction)
     const adminSupabase = createAdminClient();
-    const deducted = await deductFromTaskBank(adminSupabase, user.id, reward.cost);
+    const deducted = await deductFromTaskBank(adminSupabase, user.id, costToDeduct);
     if (!deducted) {
       return NextResponse.json({ error: "Deduction failed. Balance changed." }, { status: 400 });
     }
@@ -101,7 +104,7 @@ export async function POST(request: Request) {
         user_id: user.id,
         status: "pending",
         notes: notes || "",
-        cost_at_time: reward.cost,
+        cost_at_time: costToDeduct,
       })
       .select()
       .single();
@@ -112,8 +115,10 @@ export async function POST(request: Request) {
     await (supabase.from("notifications") as any).insert({
       user_id: user.id,
       type: "redemption_pending",
-      title: "Wish Requested! 🌸",
-      body: `You requested to redeem: ${reward.icon || "🎁"} ${reward.title} for ${reward.cost} tasks.`,
+      title: isStreak ? "Streak Reward Requested! 🌟" : "Wish Requested! 🌸",
+      body: isStreak
+        ? `You requested to redeem: ${reward.icon || "🎁"} ${reward.title} (Streak Reward).`
+        : `You requested to redeem: ${reward.icon || "🎁"} ${reward.title} for ${reward.cost} tasks.`,
     });
 
     // Notify Reward Giver
@@ -128,17 +133,21 @@ export async function POST(request: Request) {
       await (supabase.from("notifications") as any).insert({
         user_id: partner.id,
         type: "redemption_requested",
-        title: "New Wish Request! ✨",
-        body: `Your partner wants to redeem: ${reward.icon || "🎁"} ${reward.title}. Review it on your dashboard.`,
+        title: isStreak ? "New Streak Reward Request! ⚡" : "New Wish Request! ✨",
+        body: isStreak
+          ? `Your partner wants to redeem streak reward: ${reward.icon || "🎁"} ${reward.title}. Review it on your dashboard.`
+          : `Your partner wants to redeem: ${reward.icon || "🎁"} ${reward.title}. Review it on your dashboard.`,
       });
 
       // Send NTFY alert to partner
       await sendNtfyToPartner(
         supabase,
         user.id,
-        "New Wish Request! 💖",
-        `${profile.display_name}: wants to redeem ${reward.icon || "🎁"} "${reward.title}" (Cost: ${reward.cost} XP)`,
-        "gift,love_letter"
+        isStreak ? "Streak Reward Request! ⚡" : "New Wish Request! 💖",
+        isStreak
+          ? `${profile.display_name}: wants to redeem streak reward ${reward.icon || "🎁"} "${reward.title}"`
+          : `${profile.display_name}: wants to redeem ${reward.icon || "🎁"} "${reward.title}" (Cost: ${reward.cost} XP)`,
+        isStreak ? "tada,love_letter" : "gift,love_letter"
       );
     }
 

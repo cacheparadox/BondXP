@@ -55,6 +55,7 @@ export default function RewardManager() {
   const [cost, setCost] = useState(10);
   const [cooldownHours, setCooldownHours] = useState(0);
   const [icon, setIcon] = useState("🎁");
+  const [rewardType, setRewardType] = useState<"redemption" | "streak">("redemption");
   const [formLoading, setFormLoading] = useState(false);
 
   const loadManagerData = async () => {
@@ -103,6 +104,7 @@ export default function RewardManager() {
     setCost(10);
     setCooldownHours(0);
     setIcon("🎁");
+    setRewardType("redemption");
     setDialogOpen(true);
   };
 
@@ -112,8 +114,9 @@ export default function RewardManager() {
     setDescription(reward.description || "");
     setCategory(reward.category);
     setCost(reward.cost);
-    setCooldownHours(reward.cooldown_hours);
+    setCooldownHours(reward.cooldown_hours || 0);
     setIcon(reward.icon || "🎁");
+    setRewardType(reward.reward_type || "redemption");
     setDialogOpen(true);
   };
 
@@ -133,10 +136,11 @@ export default function RewardManager() {
           .update({
             title: title.trim(),
             description: description.trim(),
-            category: editingReward.reward_type === 'streak' ? 'Streak' : category,
+            category: rewardType === 'streak' ? 'Streak' : category,
             cost,
-            cooldown_hours: editingReward.reward_type === 'streak' ? 0 : cooldownHours,
+            cooldown_hours: rewardType === 'streak' ? 0 : cooldownHours,
             icon,
+            reward_type: rewardType,
           })
           .eq("id", editingReward.id);
 
@@ -150,10 +154,11 @@ export default function RewardManager() {
             couple_session_id: profile?.couple_session_id,
             title: title.trim(),
             description: description.trim(),
-            category,
+            category: rewardType === 'streak' ? 'Streak' : category,
             cost,
-            cooldown_hours: cooldownHours,
+            cooldown_hours: rewardType === 'streak' ? 0 : cooldownHours,
             icon,
+            reward_type: rewardType,
             sort_order: rewards.length,
             created_by: profile?.id,
           });
@@ -420,6 +425,40 @@ export default function RewardManager() {
           </DialogHeader>
 
           <form onSubmit={handleSaveReward} className="space-y-4 my-2">
+            {/* Reward Type Selection */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
+                Reward Type
+              </label>
+              {editingReward ? (
+                <input
+                  type="text"
+                  value={rewardType === "streak" ? "Streak Reward" : "Normal Reward (XP)"}
+                  disabled
+                  className="input opacity-60 cursor-not-allowed font-semibold"
+                />
+              ) : (
+                <select
+                  value={rewardType}
+                  onChange={(e) => {
+                    const val = e.target.value as "redemption" | "streak";
+                    setRewardType(val);
+                    if (val === "streak") {
+                      setCategory("Streak");
+                      setCost(1); // default milestone day
+                    } else {
+                      setCategory("Intimacy");
+                      setCost(10); // default task cost
+                    }
+                  }}
+                  className="input py-3 pr-8 select-custom text-xs font-semibold"
+                >
+                  <option value="redemption">Normal Reward (Costs Tasks/XP)</option>
+                  <option value="streak">Streak Reward (Unlocked by streak days)</option>
+                </select>
+              )}
+            </div>
+
             {/* Title */}
             <div className="space-y-1">
               <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
@@ -445,7 +484,7 @@ export default function RewardManager() {
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Details of what this entails..."
+                placeholder={rewardType === 'streak' ? "e.g. Day 5 streak reward." : "Details of what this entails..."}
                 className="input"
                 maxLength={100}
               />
@@ -457,7 +496,7 @@ export default function RewardManager() {
                 <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
                   Category
                 </label>
-                {editingReward?.reward_type === 'streak' ? (
+                {rewardType === 'streak' ? (
                   <input
                     type="text"
                     value="Streak"
@@ -502,7 +541,7 @@ export default function RewardManager() {
               {/* Cost */}
               <div className="space-y-1">
                 <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
-                  {editingReward?.reward_type === 'streak' ? 'Milestone Day' : 'Task Cost (XP)'}
+                  {rewardType === 'streak' ? 'Required Milestone (Days)' : 'Task Cost (XP)'}
                 </label>
                 <input
                   type="number"
@@ -515,7 +554,7 @@ export default function RewardManager() {
               </div>
 
               {/* Cooldown */}
-              {editingReward?.reward_type !== 'streak' && (
+              {rewardType !== 'streak' && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
                     Cooldown (Hours)
