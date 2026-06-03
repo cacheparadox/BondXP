@@ -160,8 +160,12 @@ export async function refreshStreakState(
     .eq("user_id", userId)
     .single();
 
-  if (!streakRecord || !streakRecord.last_completion_date) {
+  if (!streakRecord) {
     return 0;
+  }
+
+  if (!streakRecord.last_completion_date) {
+    return streakRecord.current_streak || 0;
   }
 
   const today = parseISO(localDateStr);
