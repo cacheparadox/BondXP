@@ -44,15 +44,15 @@ INSERT INTO rewards (title, description, category, cost, reward_type, icon, acti
 -- ── SPECIAL ──────────────────────────────────────────────────────
 ('Cosplay',           'Full cosplay outfit of his choice, worn for him.',   'Special', 150, 'redemption', '🎭', TRUE, FALSE, 168, 60),
 
--- ── STREAK MILESTONE REWARDS (reward_type = 'streak', cost = 0) ──
-('Short Love Note',        'Day 1 streak reward.',   'Streak', 0, 'streak', '💌', TRUE, FALSE, 0, 100),
-('Cuddles',                'Day 3 streak reward.',   'Streak', 0, 'streak', '🤗', TRUE, FALSE, 0, 103),
-('Massage',                'Day 5 streak reward.',   'Streak', 0, 'streak', '💆', TRUE, FALSE, 0, 105),
-('Sleeping Naked',         'Day 7 streak reward.',   'Streak', 0, 'streak', '🌙', TRUE, FALSE, 0, 107),
-('HJ / BJ',                'Day 10 streak reward.',  'Streak', 0, 'streak', '💦', TRUE, FALSE, 0, 110),
-('Crafts / DIY',           'Day 12 streak reward.',  'Streak', 0, 'streak', '🎨', TRUE, FALSE, 0, 112),
-('Timestop',               'Day 15 streak reward.',  'Streak', 0, 'streak', '⏱️', TRUE, FALSE, 0, 115),
-('Surprise Small Gift',    'Day 18 streak reward.',  'Streak', 0, 'streak', '🎁', TRUE, FALSE, 0, 118),
-('Free-use Session',       'Day 20 streak reward.',  'Streak', 0, 'streak', '🎭', TRUE, FALSE, 0, 120),
-('Special Outfit',         'Day 25 streak reward.',  'Streak', 0, 'streak', '👗', TRUE, FALSE, 0, 125),
-('Extended Care Session',  'Day 30 streak reward.',  'Streak', 0, 'streak', '💆‍♀️', TRUE, FALSE, 0, 130);
+-- ── STREAK MILESTONE REWARDS (reward_type = 'streak', cost = day number) ──
+('Short Love Note',        'Day 1 streak reward.',   'Streak', 1, 'streak', '💌', TRUE, FALSE, 0, 100),
+('Cuddles',                'Day 3 streak reward.',   'Streak', 3, 'streak', '🤗', TRUE, FALSE, 0, 103),
+('Massage',                'Day 5 streak reward.',   'Streak', 5, 'streak', '💆', TRUE, FALSE, 0, 105),
+('Sleeping Naked',         'Day 7 streak reward.',   'Streak', 7, 'streak', '🌙', TRUE, FALSE, 0, 107),
+('HJ / BJ',                'Day 10 streak reward.',  'Streak', 10, 'streak', '💦', TRUE, FALSE, 0, 110),
+('Crafts / DIY',           'Day 12 streak reward.',  'Streak', 12, 'streak', '🎨', TRUE, FALSE, 0, 112),
+('Timestop',               'Day 15 streak reward.',  'Streak', 15, 'streak', '⏱️', TRUE, FALSE, 0, 115),
+('Surprise Small Gift',    'Day 18 streak reward.',  'Streak', 18, 'streak', '🎁', TRUE, FALSE, 0, 118),
+('Free-use Session',       'Day 20 streak reward.',  'Streak', 20, 'streak', '🎭', TRUE, FALSE, 0, 120),
+('Special Outfit',         'Day 25 streak reward.',  'Streak', 25, 'streak', '👗', TRUE, FALSE, 0, 125),
+('Extended Care Session',  'Day 30 streak reward.',  'Streak', 30, 'streak', '💆‍♀️', TRUE, FALSE, 0, 130);

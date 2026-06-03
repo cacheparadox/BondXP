@@ -103,9 +103,9 @@ export default function RewardManager() {
           .update({
             title: title.trim(),
             description: description.trim(),
-            category,
+            category: editingReward.reward_type === 'streak' ? 'Streak' : category,
             cost,
-            cooldown_hours: cooldownHours,
+            cooldown_hours: editingReward.reward_type === 'streak' ? 0 : cooldownHours,
             icon,
           })
           .eq("id", editingReward.id);
@@ -290,8 +290,12 @@ export default function RewardManager() {
                       {reward.category}
                     </span>
                     <span>•</span>
-                    <span>Cost: <strong>{reward.cost} tasks</strong></span>
-                    {reward.cooldown_hours > 0 && (
+                    {reward.reward_type === 'streak' ? (
+                      <span>Milestone: <strong>Day {reward.cost}</strong></span>
+                    ) : (
+                      <span>Cost: <strong>{reward.cost} tasks</strong></span>
+                    )}
+                    {reward.reward_type !== 'streak' && reward.cooldown_hours > 0 && (
                       <>
                         <span>•</span>
                         <span>Cooldown: <strong>{reward.cooldown_hours}h</strong></span>
@@ -423,19 +427,28 @@ export default function RewardManager() {
                 <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
                   Category
                 </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="input py-3 pr-8 select-custom"
-                >
-                  <option value="Intimacy">Intimacy</option>
-                  <option value="Sexual">Sexual</option>
-                  <option value="Cute">Cute</option>
-                  <option value="Acts of Service">Acts of Service</option>
-                  <option value="Monetary">Monetary</option>
-                  <option value="Outings">Outings</option>
-                  <option value="Special">Special</option>
-                </select>
+                {editingReward?.reward_type === 'streak' ? (
+                  <input
+                    type="text"
+                    value="Streak"
+                    disabled
+                    className="input opacity-60 cursor-not-allowed"
+                  />
+                ) : (
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="input py-3 pr-8 select-custom"
+                  >
+                    <option value="Intimacy">Intimacy</option>
+                    <option value="Sexual">Sexual</option>
+                    <option value="Cute">Cute</option>
+                    <option value="Acts of Service">Acts of Service</option>
+                    <option value="Monetary">Monetary</option>
+                    <option value="Outings">Outings</option>
+                    <option value="Special">Special</option>
+                  </select>
+                )}
               </div>
 
               {/* Icon / Emoji */}
@@ -459,7 +472,7 @@ export default function RewardManager() {
               {/* Cost */}
               <div className="space-y-1">
                 <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
-                  Task Cost (XP)
+                  {editingReward?.reward_type === 'streak' ? 'Milestone Day' : 'Task Cost (XP)'}
                 </label>
                 <input
                   type="number"
@@ -472,19 +485,21 @@ export default function RewardManager() {
               </div>
 
               {/* Cooldown */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
-                  Cooldown (Hours)
-                </label>
-                <input
-                  type="number"
-                  value={cooldownHours}
-                  onChange={(e) => setCooldownHours(Math.max(0, parseInt(e.target.value) || 0))}
-                  min={0}
-                  className="input"
-                  required
-                />
-              </div>
+              {editingReward?.reward_type !== 'streak' && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-heading font-bold uppercase tracking-wider text-white/40">
+                    Cooldown (Hours)
+                  </label>
+                  <input
+                    type="number"
+                    value={cooldownHours}
+                    onChange={(e) => setCooldownHours(Math.max(0, parseInt(e.target.value) || 0))}
+                    min={0}
+                    className="input"
+                    required
+                  />
+                </div>
+              )}
             </div>
 
             <DialogFooter className="flex gap-2 pt-4">
