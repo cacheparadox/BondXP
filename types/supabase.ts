@@ -636,6 +636,7 @@ export const REWARD_CATEGORIES = [
   { id: "Monetary",        label: "Monetary",         icon: "💎" },
   { id: "Outings",         label: "Outings",          icon: "☕" },
   { id: "Special",         label: "Special",          icon: "🦸" },
+  { id: "Streak",          label: "Streak",           icon: "⚡" },
 ];
 
 // ================================================================

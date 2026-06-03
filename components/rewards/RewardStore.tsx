@@ -8,6 +8,36 @@ import { Sparkles, Trophy, Flame, Clock, Lock, Send, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
+function getStreakMilestoneDay(title: string, description: string, cost: number): number {
+  const STREAK_DAYS_MAP: Record<string, number> = {
+    "short love note": 1,
+    "cuddles": 3,
+    "massage": 5,
+    "sleeping naked": 7,
+    "hj / bj": 10,
+    "crafts / diy": 12,
+    "timestop": 15,
+    "surprise small gift": 18,
+    "free-use session": 20,
+    "special outfit": 25,
+    "extended care session": 30,
+  };
+  
+  const titleKey = (title || "").toLowerCase().trim();
+  if (STREAK_DAYS_MAP[titleKey]) {
+    return STREAK_DAYS_MAP[titleKey];
+  }
+  
+  if (description) {
+    const match = description.match(/Day\s+(\d+)/i);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  
+  return cost || 0;
+}
+
 export default function RewardStore() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
@@ -16,6 +46,7 @@ export default function RewardStore() {
   const [rewards, setRewards] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [showAffordableOnly, setShowAffordableOnly] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   // Cooldown Trackers (stores latest redemptions to calculate remaining cooldowns)
   const [redemptions, setRedemptions] = useState<any[]>([]);
@@ -51,18 +82,26 @@ export default function RewardStore() {
         .single();
       setBank(b);
 
-      // 3. Get all active & visible redemption rewards in this couple session (excl. streak rewards)
+      // 3. Get current streak
+      const { data: str } = await (supabase
+        .from("streaks") as any)
+        .select("current_streak")
+        .eq("user_id", user.id)
+        .single();
+      setCurrentStreak(str?.current_streak || 0);
+
+      // 4. Get all active & visible redemption and streak rewards in this couple session
       const { data: rew } = await (supabase
         .from("rewards") as any)
         .select("*")
         .eq("couple_session_id", prof.couple_session_id)
-        .eq("reward_type", "redemption")
+        .in("reward_type", ["redemption", "streak"])
         .eq("active", true)
         .eq("hidden", false)
         .order("sort_order", { ascending: true });
       setRewards(rew || []);
 
-      // 4. Get active redemptions to track cooldowns
+      // 5. Get active redemptions to track cooldowns
       const { data: red } = await (supabase
         .from("redemptions") as any)
         .select("reward_id, redeemed_at")
@@ -134,8 +173,12 @@ export default function RewardStore() {
   const availableBalance = bank?.available_tasks || 0;
 
   const filteredRewards = rewards.filter((r) => {
+    if (r.reward_type === "streak") {
+      const milestone = getStreakMilestoneDay(r.title, r.description || "", r.cost);
+      if (milestone > currentStreak) return false;
+    }
     if (activeCategory !== "all" && r.category !== activeCategory) return false;
-    if (showAffordableOnly && availableBalance < r.cost) return false;
+    if (showAffordableOnly && r.reward_type !== "streak" && availableBalance < r.cost) return false;
     return true;
   });
 
@@ -215,7 +258,8 @@ export default function RewardStore() {
           {filteredRewards.length > 0 ? (
             filteredRewards.map((reward) => {
               const cooldownLeft = getCooldownRemaining(reward);
-              const isAffordable = availableBalance >= reward.cost;
+              const isStreak = reward.reward_type === "streak";
+              const isAffordable = isStreak ? true : availableBalance >= reward.cost;
               const isLocked = !isAffordable || cooldownLeft > 0;
 
               return (
@@ -228,6 +272,10 @@ export default function RewardStore() {
                   whileHover={!isLocked ? { y: -2 } : {}}
                   className={`card flex flex-col p-5 bg-white/[0.02] border-white/[0.06] relative overflow-hidden transition-all duration-200 ${
                     isLocked ? "opacity-75" : "hover:border-primary/30"
+                  } ${
+                    isStreak
+                      ? "bg-gradient-to-br from-primary/10 via-transparent to-transparent border-primary/20 shadow-glow-primary-sm"
+                      : ""
                   }`}
                 >
                   {/* Shimmer effect if affordable and unlocked */}
@@ -243,18 +291,27 @@ export default function RewardStore() {
                     
                     {/* Cost Badge */}
                     <span className={`badge font-bold font-heading text-xs px-2.5 py-1 ${
-                      isAffordable
-                        ? "bg-primary/10 border border-primary/20 text-primary"
-                        : "bg-white/[0.04] text-white/50 border border-white/[0.06]"
+                      isStreak
+                        ? "bg-primary/20 border border-primary/30 text-white shadow-glow-primary-sm animate-pulse"
+                        : isAffordable
+                          ? "bg-primary/10 border border-primary/20 text-primary"
+                          : "bg-white/[0.04] text-white/50 border border-white/[0.06]"
                     }`}>
-                      {reward.cost} Tasks
+                      {isStreak
+                        ? `Day ${getStreakMilestoneDay(reward.title, reward.description || "", reward.cost)} Milestone`
+                        : `${reward.cost} Tasks`}
                     </span>
                   </div>
 
                   {/* Body Info */}
                   <div className="mt-4 flex-1">
-                    <h3 className="font-heading font-black text-sm text-white">
+                    <h3 className="font-heading font-black text-sm text-white flex items-center gap-1.5">
                       {reward.title}
+                      {isStreak && (
+                        <span className="text-[8px] bg-primary/25 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-bold font-heading uppercase tracking-wide">
+                          Streak Reward
+                        </span>
+                      )}
                     </h3>
                     <p className="text-xs text-white/50 leading-relaxed mt-1 font-body">
                       {reward.description}
@@ -306,7 +363,15 @@ export default function RewardStore() {
               Confirm Redemption
             </DialogTitle>
             <DialogDescription className="text-xs text-white/50 mt-1 font-body leading-relaxed">
-              Are you sure you want to request: <strong className="text-white">{selectedReward?.icon} {selectedReward?.title}</strong>? This will deduct <strong className="text-primary">{selectedReward?.cost} tasks</strong> from your XP balance.
+              {selectedReward?.reward_type === 'streak' ? (
+                <>
+                  Are you sure you want to request your Day {getStreakMilestoneDay(selectedReward.title, selectedReward.description || "", selectedReward.cost)} milestone reward: <strong className="text-white">{selectedReward?.icon} {selectedReward?.title}</strong>? This will not deduct any tasks from your XP balance.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to request: <strong className="text-white">{selectedReward?.icon} {selectedReward?.title}</strong>? This will deduct <strong className="text-primary">{selectedReward?.cost} tasks</strong> from your XP balance.
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
 

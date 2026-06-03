@@ -70,23 +70,42 @@ export async function GET(request: Request) {
       return NextResponse.json({ eligible: false, message: "Only the Task User can claim streak rewards" });
     }
 
-    // 2. Refresh and get current streak using admin client to bypass RLS for updating
-    const adminSupabase = createAdminClient();
-    const currentStreak = await refreshStreakState(adminSupabase, user.id, localDate);
-
-    // Fetch the updated streak record
-    const { data: streakRecord } = await (adminSupabase
+    // 2. Fetch the streak record using the authenticated client first (bypasses RLS select block)
+    const { data: streakRecord } = await (supabase
       .from("streaks") as any)
       .select("current_streak, last_completion_date")
       .eq("user_id", user.id)
       .single();
+
+    let currentStreak = streakRecord?.current_streak || 0;
+
+    // Refresh the database streak state if possible, otherwise do a local check
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const hasServiceKey = serviceKey && serviceKey !== "your_service_role_key_here";
+
+    if (hasServiceKey) {
+      const adminSupabase = createAdminClient();
+      currentStreak = await refreshStreakState(adminSupabase, user.id, localDate);
+    } else if (streakRecord && streakRecord.last_completion_date) {
+      // Local fallback calculation for broken streaks when service key is placeholder
+      const today = new Date(localDate);
+      const lastCompletion = new Date(streakRecord.last_completion_date);
+      const diffTime = Math.abs(today.getTime() - lastCompletion.getTime());
+      const daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (daysDiff > 1) {
+        currentStreak = 0;
+      }
+    }
 
     if (currentStreak <= 0) {
       return NextResponse.json({
         eligible: false,
         reason: "no_streak",
         message: "You don't have an active streak yet.",
-        refreshedStreak: streakRecord
+        refreshedStreak: {
+          current_streak: currentStreak,
+          last_completion_date: streakRecord?.last_completion_date
+        }
       });
     }
 
@@ -126,6 +145,11 @@ export async function GET(request: Request) {
         .filter((m) => m.days <= currentStreak);
     }
 
+    const outputStreakRecord = {
+      current_streak: currentStreak,
+      last_completion_date: streakRecord?.last_completion_date
+    };
+
     if (existingClaim) {
       return NextResponse.json({
         eligible: false,
@@ -134,7 +158,7 @@ export async function GET(request: Request) {
         claim: existingClaim,
         currentStreak,
         availableMilestones,
-        refreshedStreak: streakRecord
+        refreshedStreak: outputStreakRecord
       });
     }
 
@@ -143,7 +167,7 @@ export async function GET(request: Request) {
         eligible: false,
         reason: "all_claimed",
         message: "You don't have any milestone rewards available for your current streak level!",
-        refreshedStreak: streakRecord
+        refreshedStreak: outputStreakRecord
       });
     }
 
@@ -151,7 +175,7 @@ export async function GET(request: Request) {
       eligible: true,
       currentStreak,
       availableMilestones,
-      refreshedStreak: streakRecord
+      refreshedStreak: outputStreakRecord
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
@@ -189,9 +213,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Only the Task User can claim streak rewards" }, { status: 403 });
     }
 
-    // 2. Get streak using admin client to read stable value
-    const adminSupabase = createAdminClient();
-    const { data: streakRecord } = await (adminSupabase
+    // 2. Get streak using authenticated user client to bypass RLS select block
+    const { data: streakRecord } = await (supabase
       .from("streaks") as any)
       .select("current_streak")
       .eq("user_id", user.id)
