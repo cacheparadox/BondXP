@@ -1,7 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { STREAK_MILESTONES } from "@/types/supabase";
 import { sendNtfyToPartner } from "@/lib/ntfy";
+import { refreshStreakState } from "@/lib/streak-engine";
 
 /**
  * GET /api/streak-claims
@@ -35,39 +36,27 @@ export async function GET(request: Request) {
       return NextResponse.json({ eligible: false, message: "Only the Task User can claim streak rewards" });
     }
 
-    // 2. Check if today's daily progress is streak-qualified
-    const { data: progress } = await (supabase
-      .from("daily_progress") as any)
-      .select("streak_qualified")
-      .eq("user_id", user.id)
-      .eq("date", localDate)
-      .single();
+    // 2. Refresh and get current streak using admin client to bypass RLS for updating
+    const adminSupabase = createAdminClient();
+    const currentStreak = await refreshStreakState(adminSupabase, user.id, localDate);
 
-    if (!progress || !progress.streak_qualified) {
-      return NextResponse.json({
-        eligible: false,
-        reason: "goal_not_met",
-        message: "Complete today's 10-task goal to secure your streak and unlock rewards!"
-      });
-    }
-
-    // 3. Get current streak
-    const { data: streak } = await (supabase
+    // Fetch the updated streak record
+    const { data: streakRecord } = await (adminSupabase
       .from("streaks") as any)
-      .select("current_streak")
+      .select("current_streak, last_completion_date")
       .eq("user_id", user.id)
       .single();
 
-    const currentStreak = streak?.current_streak || 0;
     if (currentStreak <= 0) {
       return NextResponse.json({
         eligible: false,
         reason: "no_streak",
-        message: "You don't have an active streak yet."
+        message: "You don't have an active streak yet.",
+        refreshedStreak: streakRecord
       });
     }
 
-    // 4. Check if already claimed today
+    // 3. Check if already claimed today (enforcing 1 claim per day rule)
     const { data: existingClaim } = await (supabase
       .from("streak_reward_claims") as any)
       .select("*")
@@ -75,16 +64,7 @@ export async function GET(request: Request) {
       .eq("claimed_date", localDate)
       .single();
 
-    if (existingClaim) {
-      return NextResponse.json({
-        eligible: false,
-        reason: "already_claimed",
-        message: "You've already claimed today's milestone reward!",
-        claim: existingClaim
-      });
-    }
-
-    // User is eligible! Find all milestones at or below their streak level from database
+    // Find all active milestone rewards in the database for this couple session
     const { data: dbStreakRewards } = await (supabase
       .from("rewards") as any)
       .select("*")
@@ -105,13 +85,36 @@ export async function GET(request: Request) {
         .sort((a: any, b: any) => a.days - b.days);
     } else {
       // Fallback to default presets
-      availableMilestones = STREAK_MILESTONES.filter((m) => m.days <= currentStreak);
+      availableMilestones = STREAK_MILESTONES
+        .filter((m) => m.days <= currentStreak);
+    }
+
+    if (existingClaim) {
+      return NextResponse.json({
+        eligible: false,
+        reason: "already_claimed",
+        message: "You've already claimed today's milestone reward!",
+        claim: existingClaim,
+        currentStreak,
+        availableMilestones,
+        refreshedStreak: streakRecord
+      });
+    }
+
+    if (availableMilestones.length === 0) {
+      return NextResponse.json({
+        eligible: false,
+        reason: "all_claimed",
+        message: "You don't have any milestone rewards available for your current streak level!",
+        refreshedStreak: streakRecord
+      });
     }
 
     return NextResponse.json({
       eligible: true,
       currentStreak,
       availableMilestones,
+      refreshedStreak: streakRecord
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
@@ -149,28 +152,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Only the Task User can claim streak rewards" }, { status: 403 });
     }
 
-    // 2. Check if today is qualified
-    const { data: progress } = await (supabase
-      .from("daily_progress") as any)
-      .select("streak_qualified")
-      .eq("user_id", user.id)
-      .eq("date", localDate)
-      .single();
-
-    if (!progress || !progress.streak_qualified) {
-      return NextResponse.json({ error: "Goal not met. Complete 10 tasks to claim!" }, { status: 400 });
-    }
-
-    // 3. Get streak
-    const { data: streak } = await (supabase
+    // 2. Get streak using admin client to read stable value
+    const adminSupabase = createAdminClient();
+    const { data: streakRecord } = await (adminSupabase
       .from("streaks") as any)
       .select("current_streak")
       .eq("user_id", user.id)
       .single();
 
-    const currentStreak = streak?.current_streak || 0;
+    const currentStreak = streakRecord?.current_streak || 0;
     if (milestoneDays > currentStreak) {
       return NextResponse.json({ error: `Cannot claim a Day ${milestoneDays} reward with a streak of only ${currentStreak} days.` }, { status: 400 });
+    }
+
+    // 3. Check duplicate claims for today (enforcing 1 claim per day rule)
+    const { data: existingClaim } = await (supabase
+      .from("streak_reward_claims") as any)
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("claimed_date", localDate)
+      .single();
+
+    if (existingClaim) {
+      return NextResponse.json({ error: "You have already claimed a streak reward today" }, { status: 400 });
     }
 
     // Find milestone details from database
@@ -201,18 +205,6 @@ export async function POST(request: Request) {
 
     if (!milestone) {
       return NextResponse.json({ error: "Invalid milestone level" }, { status: 400 });
-    }
-
-    // 4. Check duplicate claims for today
-    const { data: existingClaim } = await (supabase
-      .from("streak_reward_claims") as any)
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("claimed_date", localDate)
-      .single();
-
-    if (existingClaim) {
-      return NextResponse.json({ error: "You have already claimed a streak reward today" }, { status: 400 });
     }
 
     // 5. Insert claim record
@@ -260,7 +252,7 @@ export async function POST(request: Request) {
         supabase,
         user.id,
         "Streak Reward Claimed! 🌟",
-        `${profile.display_name} hit a ${currentStreak}-day streak and claimed: ${milestone.icon} ${milestone.title} (Day ${milestoneDays} milestone).`,
+        `${profile.display_name}: hit a ${currentStreak}-day streak and claimed: ${milestone.icon} ${milestone.title} (Day ${milestoneDays} milestone).`,
         "tada,fire"
       );
     }

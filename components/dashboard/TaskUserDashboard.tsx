@@ -87,6 +87,9 @@ export default function TaskUserDashboard() {
       const claimsRes = await fetch(`/api/streak-claims?localDate=${localDateStr}`);
       const claimsData = await claimsRes.json();
       setClaimEligibility(claimsData);
+      if (claimsData.refreshedStreak) {
+        setStreak(claimsData.refreshedStreak);
+      }
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to load dashboard data");
@@ -161,6 +164,9 @@ export default function TaskUserDashboard() {
         const claimsRes = await fetch(`/api/streak-claims?localDate=${localDateStr}`);
         const claimsData = await claimsRes.json();
         setClaimEligibility(claimsData);
+        if (claimsData.refreshedStreak) {
+          setStreak(claimsData.refreshedStreak);
+        }
       } else {
         toast.error(res.error || "Failed to log task");
       }
@@ -205,6 +211,9 @@ export default function TaskUserDashboard() {
         const claimsRes = await fetch(`/api/streak-claims?localDate=${localDateStr}`);
         const claimsData = await claimsRes.json();
         setClaimEligibility(claimsData);
+        if (claimsData.refreshedStreak) {
+          setStreak(claimsData.refreshedStreak);
+        }
       } else {
         toast.error(res.error || "Failed to claim reward");
       }
